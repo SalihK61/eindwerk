@@ -1,6 +1,8 @@
-# routes.py
 import os
-from flask import Blueprint, render_template, session, redirect, url_for, current_app
+from flask import (
+    Blueprint, render_template, session,
+    redirect, url_for, current_app
+)
 from authlib.integrations.flask_client import OAuthError
 from models import db, User
 
@@ -8,8 +10,9 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 def home():
+    # Grab any existing user from the session
     user = session.get('user')
-    return render_template('base.html', user=user)
+    return render_template('home.html', user=user)
 
 @main.route('/login')
 def login():
@@ -31,13 +34,17 @@ def callback():
     except OAuthError:
         return redirect(url_for('main.home'))
 
-    userinfo = current_app.auth0.parse_id_token(token)
-    sub     = userinfo['sub']
+    # Full UserInfo endpoint
+    userinfo_url = f"https://{current_app.config['AUTH0_DOMAIN']}/userinfo"
+    resp = current_app.auth0.get(userinfo_url, token=token)
+    userinfo = resp.json()
+
+    sub     = userinfo.get('sub')
     name    = userinfo.get('name')
     email   = userinfo.get('email')
     picture = userinfo.get('picture')
 
-    # Upsert into local users table
+    # Upsert user into Postgres
     user = User.query.filter_by(sub=sub).first()
     if not user:
         user = User(sub=sub, name=name, email=email, picture=picture)
@@ -48,13 +55,16 @@ def callback():
         user.picture = picture
     db.session.commit()
 
+    # Persist to session and make it permanent
     session['user'] = {
         'sub': sub,
         'name': name,
         'email': email,
         'picture': picture
     }
-    return redirect(url_for('main.home'))
+    session.permanent = True
+
+    return redirect(url_for('main.dashboard'))
 
 @main.route('/logout')
 def logout():
@@ -65,6 +75,36 @@ def logout():
         f"&client_id={current_app.config['AUTH0_CLIENT_ID']}"
     )
 
+@main.route('/dashboard')
+def dashboard():
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+    # TODO: load user’s CSVs & reports
+    csvs    = []
+    reports = []
+    return render_template(
+        'dashboard.html',
+        user=session['user'],
+        csvs=csvs,
+        reports=reports
+    )
+
+@main.route('/mycsvs')
+def mycsvs():
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+    csvs = []
+    return render_template('csvs.html', csvs=csvs)
+
+@main.route('/reports')
+def reports():
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+    reports = []
+    return render_template('reports.html', reports=reports)
+
 @main.route('/upload')
 def upload():
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
     return "<h1>Upload Page Placeholder</h1>"

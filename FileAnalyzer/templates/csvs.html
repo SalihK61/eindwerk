@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<main class="p-8 bg-gray-900 min-h-screen text-white">
+  <h2 class="text-3xl font-bold mb-6">My CSV Uploads</h2>
+  {% if csvs %}
+    <ul class="space-y-4">
+      {% for file in csvs %}
+        <li class="p-4 bg-gray-800 rounded">{{ file.filename }} — uploaded on {{ file.uploaded_at }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No CSVs uploaded yet.</p>
+  {% endif %}
+</main>
+{% endblock %}

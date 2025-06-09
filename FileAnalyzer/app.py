@@ -1,4 +1,3 @@
-# app.py
 import os
 from flask import Flask
 from authlib.integrations.flask_client import OAuth
@@ -13,13 +12,13 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Initialize SQLAlchemy
+    # Initialize database
     db.init_app(app)
 
-    # Set up Auth0 via Authlib
+    # Auth0 setup
     oauth = OAuth(app)
     auth0 = oauth.register(
-        name='auth0',
+        'auth0',
         client_id=app.config['AUTH0_CLIENT_ID'],
         client_secret=app.config['AUTH0_CLIENT_SECRET'],
         client_kwargs={'scope': 'openid profile email'},
@@ -27,19 +26,23 @@ def create_app():
     )
     app.auth0 = auth0
 
-    # Register your routes Blueprint
+    # Register routes
     app.register_blueprint(main)
 
-    # Create database tables (moet hier gebeuren anders error ps. No idea whyyy??)
+    # Create database tables (and upload/report folders)
     with app.app_context():
         db.create_all()
+        os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
+        os.makedirs(app.config.get('REPORT_FOLDER', 'reports'), exist_ok=True)
 
     return app
 
 app = create_app()
 
 if __name__ == '__main__':
-    # bind to all interfaces, enable debug in development
-    app.run(host='0.0.0.0',
-            port=4000,
-            debug=(app.config.get('FLASK_ENV') == 'development'))
+    # Listen on port 4000 per your Docker setup
+    app.run(
+        host='0.0.0.0',
+        port=4000,
+        debug=(app.config.get('FLASK_ENV') == 'development')
+    )

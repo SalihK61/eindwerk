@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<main class="p-8 bg-gray-900 min-h-screen text-white">
+  <h2 class="text-3xl font-bold mb-6">My PDF Reports</h2>
+  {% if reports %}
+    <ul class="space-y-4">
+      {% for rpt in reports %}
+        <li class="p-4 bg-gray-800 rounded">
+          <a href="{{ rpt.url }}" class="underline">{{ rpt.title }}</a> — generated on {{ rpt.generated_at }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No reports generated yet.</p>
+  {% endif %}
+</main>
+{% endblock %}
