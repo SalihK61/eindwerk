@@ -10,5 +10,5 @@ WORKDIR /app
 COPY --from=builder /root/.local /root/.local
 ENV PATH=/root/.local/bin:$PATH
 COPY . .
-EXPOSE 5000
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+EXPOSE 4000
+CMD ["gunicorn", "--bind", "0.0.0.0:4000", "app:app"]
