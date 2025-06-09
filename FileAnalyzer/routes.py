@@ -125,11 +125,11 @@ def upload():
             flash('No selected file', 'danger')
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            # --- USER LOGIC: Get user_sub from session or login manager ---
-            user_sub = session.get('user_sub')
+            # FIX: Get user_sub correctly from session['user']
+            user_sub = session.get('user', {}).get('sub')
             if not user_sub:
                 flash('You must be logged in to upload.', 'danger')
-                return redirect(url_for('main.login'))  # Or your login route
+                return redirect(url_for('main.login'))
 
             filename = secure_filename(file.filename)
             upload_folder = current_app.config['UPLOAD_FOLDER']
@@ -140,6 +140,7 @@ def upload():
             file.save(absolute_path)
 
             try:
+                import pandas as pd  # Just in case!
                 df = pd.read_csv(absolute_path)
                 preview = df.head().to_html(classes='table table-striped', border=0)
                 flash('File uploaded and processed!', 'success')
@@ -158,3 +159,4 @@ def upload():
         else:
             flash('Invalid file type.', 'danger')
     return render_template('upload.html', preview=preview)
+
