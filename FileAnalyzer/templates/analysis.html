@@ -4,29 +4,37 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-6">
-  <h1 class="text-3xl font-bold mb-4">Analysis Report: {{ filename }}</h1>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold">Analysis Report: {{ filename }}</h1>
+    <a href="{{ url_for('main.dashboard') }}" class="text-indigo-600 hover:text-indigo-800">&larr; Back to Dashboard</a>
+  </div>
 
-  <section class="mb-8">
-    <h2 class="text-2xl font-semibold mb-2">Summary Statistics</h2>
-    <div class="overflow-x-auto bg-white shadow rounded-lg p-4">
+  <!-- Summary Statistics -->
+  <section class="mb-10">
+    <h2 class="text-2xl font-semibold mb-4">Summary Statistics</h2>
+    <div class="overflow-x-auto bg-white shadow rounded-lg p-6">
       {{ summary | safe }}
     </div>
   </section>
 
-  <section class="mb-8">
-    <h2 class="text-2xl font-semibold mb-2">Correlation Matrix</h2>
-    <div class="overflow-x-auto bg-white shadow rounded-lg p-4">
+  <!-- Correlation Matrix -->
+  <section class="mb-10">
+    <h2 class="text-2xl font-semibold mb-4">Correlation Matrix</h2>
+    <div class="overflow-x-auto bg-white shadow rounded-lg p-6">
       {{ corr | safe }}
     </div>
   </section>
 
-  <section class="mb-8">
-    <h2 class="text-2xl font-semibold mb-4">Histograms</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <!-- Histograms -->
+  <section class="mb-10">
+    <h2 class="text-2xl font-semibold mb-6">Histograms</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for img in hist_paths %}
-        <div class="bg-white shadow rounded-lg p-4">
-          <img src="{{ img }}" alt="Histogram of {{ img.split('/')[-1].split('.')[0] }}" class="w-full h-auto mb-2">
-          <p class="text-center text-sm text-gray-600">{{ img.split('/')[-1].split('.')[0] }}</p>
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+          <img src="{{ img }}" alt="Histogram of {{ img.split('/')[-1].split('.')[0] }}" class="w-full h-48 object-contain">
+          <div class="p-4">
+            <p class="text-center text-sm font-medium text-gray-700">{{ img.split('/')[-1].split('.')[0] }}</p>
+          </div>
         </div>
       {% endfor %}
     </div>
