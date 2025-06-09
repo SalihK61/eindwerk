@@ -1,18 +1,21 @@
 import os
-from flask import Flask
+from flask import Flask, session
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from config import Config
 from models import db
 from routes import main
 from flask_login import current_user
+from flask import current_app
 
 load_dotenv()
 
 
 def create_app():
     app = Flask(__name__)
+
     app.config.from_object(Config)
+
 
     # Initialize database
     db.init_app(app)
@@ -40,13 +43,10 @@ def create_app():
     return app
 
 app = create_app()
-
-
-
 @app.context_processor
 def inject_user():
-    # makes `current_user` available in every Jinja template
-    return dict(current_user=current_user)
+    # Pull the Auth0 profile you stored in session['user']
+    return {"user": session.get("user")}
 
 
 if __name__ == '__main__':
