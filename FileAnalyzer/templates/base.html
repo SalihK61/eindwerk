@@ -1,62 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>CSV Analyser</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-  <style> html { scroll-behavior: smooth; } </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}CSV Analyser{% endblock %}</title>
+  <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet" />
+  <link href="https://unpkg.com/aos@next/dist/aos.css" rel="stylesheet" />
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+<body class="bg-gray-900 text-white">
 
-  <!-- Header -->
-  <header class="p-6 flex justify-between items-center bg-gray-900/90 backdrop-blur-md sticky top-0 z-50">
-    <!-- LEFT SIDE -->
+<header class="bg-gray-800 shadow-md">
+  <div class="container mx-auto flex justify-between items-center py-4 px-6">
+    <!-- LEFT: avatar if logged in, else site title -->
     <div class="flex items-center space-x-4">
-      {% if user and request.endpoint == 'main.dashboard' %}
-        {% if user.picture %}
-          <img src="{{ user.picture }}" alt="Avatar"
-               class="w-8 h-8 rounded-full border-2 border-gray-700">
-        {% endif %}
-        <span class="font-medium text-lg">Hello, {{ user.name }}</span>
+      {% if current_user.is_authenticated %}
+        <img
+          src="{{ current_user.profile_pic_url }}"
+          alt="{{ current_user.username }}’s avatar"
+          class="w-10 h-10 rounded-full border-2 border-gray-700"
+        />
       {% else %}
         <h1 class="text-3xl font-bold">CSV Analyser</h1>
       {% endif %}
     </div>
 
-    <!-- RIGHT SIDE -->
-    <nav>
-      {% if user %}
-        <a href="{{ url_for('main.dashboard') }}"
-           class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-500 transition text-sm mr-2">
-          Dashboard
-        </a>
-        <a href="{{ url_for('main.logout') }}"
-           class="px-4 py-2 bg-red-600 rounded hover:bg-red-500 transition text-sm">
-          Logout
-        </a>
+    <!-- RIGHT: Dashboard & Logout if logged in, Login otherwise -->
+    <div class="flex items-center space-x-4">
+      {% if current_user.is_authenticated %}
+        <a
+          href="{{ url_for('main.dashboard') }}"
+          class="text-gray-300 hover:text-white font-medium"
+        >Dashboard</a>
+        <a
+          href="{{ url_for('main.logout') }}"
+          class="text-gray-300 hover:text-white font-medium"
+        >Logout</a>
       {% else %}
-        <a href="{{ url_for('main.login') }}"
-           class="px-4 py-2 bg-white text-gray-900 rounded shadow hover:bg-gray-200 transition text-sm">
-          Login
-        </a>
+        <a
+          href="{{ url_for('main.login') }}"
+          class="px-4 py-2 bg-green-600 rounded-md hover:bg-green-500"
+        >Login</a>
       {% endif %}
-    </nav>
-  </header>
+    </div>
+  </div>
+</header>
 
-  <!-- PAGE CONTENT -->
-  <main class="flex-1">
-    {% block content %}{% endblock %}
-  </main>
+{% block content %}{% endblock %}
 
-  <!-- FOOTER -->
-  <footer class="text-center text-sm text-gray-400 p-6 bg-gray-800">
-    &copy; 2025 CSV Analyser App. All rights reserved.
-  </footer>
-
-  <!-- AOS ANIMATIONS -->
-  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-  <script>AOS.init({ once: true, duration: 800, easing: 'ease-in-out' });</script>
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script>
+  AOS.init();
+</script>
 </body>
 </html>
