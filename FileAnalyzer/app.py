@@ -7,6 +7,7 @@ from models import db
 from routes import main
 from flask_login import current_user
 from flask import current_app
+from flask import send_from_directory
 
 load_dotenv()
 
@@ -60,6 +61,11 @@ with app.app_context():
 def inject_user():
     # Pull the Auth0 profile you stored in session['user']
     return {"user": session.get("user")}
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    from config import UPLOAD_FOLDER
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 
 if __name__ == '__main__':

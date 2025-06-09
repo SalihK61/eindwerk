@@ -98,13 +98,6 @@ def dashboard():
         reports=reports
     )
 
-@main.route('/mycsvs')
-def mycsvs():
-    if 'user' not in session:
-        return redirect(url_for('main.login'))
-    csvs = []
-    return render_template('csvs.html', csvs=csvs)
-
 @main.route('/reports')
 def reports():
     if 'user' not in session:
@@ -156,4 +149,22 @@ def upload():
         else:
             flash('Invalid file type.', 'danger')
     return render_template('upload.html', preview=preview)
+
+
+from flask import send_from_directory, current_app
+
+@main.route('/uploads/<filename>')
+def uploaded_file(filename):
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    return send_from_directory(upload_folder, filename, as_attachment=True)
+
+@main.route('/mycsvs')
+def mycsvs():
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+    user_sub = session.get('user', {}).get('sub')
+    print(f"user_sub: {user_sub}")  # Debug: See what user is being queried
+    csvs = CSVFile.query.filter_by(user_sub=user_sub).all()
+    print(f"Found CSVs: {csvs}")    # Debug: List what's found
+    return render_template('csvs.html', csvs=csvs)
 
