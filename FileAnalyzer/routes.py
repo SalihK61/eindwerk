@@ -1,12 +1,21 @@
 import os
 from flask import (
     Blueprint, render_template, session,
-    redirect, url_for, current_app
+    redirect, url_for, current_app, request, flash
 )
 from authlib.integrations.flask_client import OAuthError
-from models import db, User
+from models import db, User,CSVFile
+from werkzeug.utils import secure_filename
+from flask_login import current_user, login_required
+import pandas as pd
 
 main = Blueprint('main', __name__)
+
+ALLOWED_EXTENSIONS = {'csv'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @main.route('/')
 def home():
@@ -103,8 +112,49 @@ def reports():
     reports = []
     return render_template('reports.html', reports=reports)
 
-@main.route('/upload')
+
+@main.route('/upload', methods=['GET', 'POST'])
 def upload():
-    if 'user' not in session:
-        return redirect(url_for('main.login'))
-    return render_template('upload.html', reports=upload)
+    preview = None
+    if request.method == 'POST':
+        if 'csv_file' not in request.files:
+            flash('No file part', 'danger')
+            return redirect(request.url)
+        file = request.files['csv_file']
+        if file.filename == '':
+            flash('No selected file', 'danger')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            # --- USER LOGIC: Get user_sub from session or login manager ---
+            user_sub = session.get('user_sub')
+            if not user_sub:
+                flash('You must be logged in to upload.', 'danger')
+                return redirect(url_for('main.login'))  # Or your login route
+
+            filename = secure_filename(file.filename)
+            upload_folder = current_app.config['UPLOAD_FOLDER']
+            if not os.path.exists(upload_folder):
+                os.makedirs(upload_folder)
+            relative_path = os.path.join('uploads', filename)
+            absolute_path = os.path.join(upload_folder, filename)
+            file.save(absolute_path)
+
+            try:
+                df = pd.read_csv(absolute_path)
+                preview = df.head().to_html(classes='table table-striped', border=0)
+                flash('File uploaded and processed!', 'success')
+            except Exception as e:
+                flash(f'Error processing file: {e}', 'danger')
+                return render_template('upload.html', preview=None)
+
+            # Save file to DB with user_sub
+            csv_file = CSVFile(
+                user_sub=user_sub,
+                filename=filename,
+                filepath=relative_path  # <-- relative path (for portability)
+            )
+            db.session.add(csv_file)
+            db.session.commit()
+        else:
+            flash('Invalid file type.', 'danger')
+    return render_template('upload.html', preview=preview)
