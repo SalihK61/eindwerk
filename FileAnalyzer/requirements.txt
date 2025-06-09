@@ -6,3 +6,5 @@ psycopg2-binary
 gunicorn
 requests
 flask_login
+werkzeug
+pandas
