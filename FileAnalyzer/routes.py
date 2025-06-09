@@ -265,12 +265,55 @@ def download_file(filename):
     )
 
 
+def generate_ai_insight(df):
+    stats = df.describe(include='all').to_string()
+    columns = ', '.join(df.columns)
+    sample_rows = df.head(5).to_string(index=False)
+    prompt = (
+        f"Hier is een dataset met kolommen: {columns}\n\n"
+        f"Samenvattende statistieken:\n{stats}\n\n"
+        f"De eerste 5 rijen van de data:\n{sample_rows}\n\n"
+        "Geef een gedetailleerde, begrijpelijke analyse en interessante inzichten voor een rapport. "
+        "Beschrijf opvallende cijfers, trends, mogelijke verbanden, of bijzonderheden. "
+        "De data kan over eender welk onderwerp gaan, dus geef de analyse zonder specifieke voorkennis."
+    )
+    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=350,
+    )
+    return response.choices[0].message.content
+
+def create_generic_plot(df):
+    num_cols = df.select_dtypes(include='number').columns.tolist()
+    cat_cols = df.select_dtypes(include='object').columns.tolist()
+    buf = io.BytesIO()
+    plt.figure(figsize=(6, 4))
+    if num_cols:
+        col = num_cols[0]
+        df[col].dropna().hist(bins=10)
+        plt.title(f"Verdeling van {col}")
+        plt.xlabel(col)
+        plt.ylabel("Frequentie")
+    elif cat_cols:
+        col = cat_cols[0]
+        df[col].value_counts().head(10).plot(kind="bar")
+        plt.title(f"Top 10 meest voorkomende waarden in {col}")
+        plt.xlabel(col)
+        plt.ylabel("Frequentie")
+    else:
+        plt.text(0.5, 0.5, "Geen geschikte kolom voor grafiek", ha='center')
+    plt.tight_layout()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    return buf
+
+
 @main.route('/generate_pdf/<int:csv_id>')
 def generate_pdf(csv_id):
-    import io
-    import os
     from flask import send_file, current_app
-    from fpdf import FPDF
     from models import CSVFile, PDFReport, db
 
     # 1. Find the uploaded file and load dataframe
@@ -310,76 +353,32 @@ def generate_pdf(csv_id):
     pdf.image(plot_path, x=10, w=pdf.w - 20)
     os.remove(plot_path)
 
-    # Save to in-memory buffer for download
-    output = io.BytesIO()
-    pdf_bytes = pdf.output(dest='S').encode('latin1')
-    output.write(pdf_bytes)
-    output.seek(0)
-
-    # Save to PDFReport database table (optional, remove if not needed)
+    # Save PDF to disk (for tracking in DB)
     pdf_filename = f"{os.path.splitext(csv_record.filename)[0]}_analysis_report.pdf"
-    # Only add if not already in the DB, else you get duplicates:
-    existing = PDFReport.query.filter_by(filename=pdf_filename, user_id=csv_record.user.id).first()
+    pdf_storage_path = os.path.join(current_app.config['UPLOAD_FOLDER'], pdf_filename)
+    pdf_bytes = pdf.output(dest='S').encode('latin1')
+    with open(pdf_storage_path, "wb") as f:
+        f.write(pdf_bytes)
+
+    # Save to PDFReport database table (using user_sub and filepath)
+    existing = PDFReport.query.filter_by(filename=pdf_filename, user_sub=csv_record.user_sub).first()
     if not existing:
-        pdf_report = PDFReport(filename=pdf_filename, user_id=csv_record.user.id)
+        pdf_report = PDFReport(
+            filename=pdf_filename,
+            user_sub=csv_record.user_sub,
+            filepath=pdf_storage_path
+        )
         db.session.add(pdf_report)
         db.session.commit()
 
+    # Serve as download
     return send_file(
-        output,
+        pdf_storage_path,
         mimetype="application/pdf",
         as_attachment=True,
         download_name=pdf_filename
     )
 
-
-
-def generate_ai_insight(df):
-    stats = df.describe(include='all').to_string()
-    columns = ', '.join(df.columns)
-    sample_rows = df.head(5).to_string(index=False)
-    prompt = (
-        f"Hier is een dataset met kolommen: {columns}\n\n"
-        f"Samenvattende statistieken:\n{stats}\n\n"
-        f"De eerste 5 rijen van de data:\n{sample_rows}\n\n"
-        "Geef een gedetailleerde, begrijpelijke analyse en interessante inzichten voor een rapport. "
-        "Beschrijf opvallende cijfers, trends, mogelijke verbanden, of bijzonderheden. "
-        "De data kan over eender welk onderwerp gaan, dus geef de analyse zonder specifieke voorkennis."
-    )
-    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=350,
-    )
-    return response.choices[0].message.content
-
-
-def create_generic_plot(df):
-    num_cols = df.select_dtypes(include='number').columns.tolist()
-    cat_cols = df.select_dtypes(include='object').columns.tolist()
-    buf = io.BytesIO()
-    plt.figure(figsize=(6, 4))
-
-    if num_cols:
-        col = num_cols[0]
-        df[col].dropna().hist(bins=10)
-        plt.title(f"Verdeling van {col}")
-        plt.xlabel(col)
-        plt.ylabel("Frequentie")
-    elif cat_cols:
-        col = cat_cols[0]
-        df[col].value_counts().head(10).plot(kind="bar")
-        plt.title(f"Top 10 meest voorkomende waarden in {col}")
-        plt.xlabel(col)
-        plt.ylabel("Frequentie")
-    else:
-        plt.text(0.5, 0.5, "Geen geschikte kolom voor grafiek", ha='center')
-    plt.tight_layout()
-    plt.savefig(buf, format="png")
-    plt.close()
-    buf.seek(0)
-    return buf
 
 
 
