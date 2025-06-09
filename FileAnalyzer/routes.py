@@ -6,11 +6,10 @@ from flask import (
 from authlib.integrations.flask_client import OAuthError
 from models import db, User, CSVFile
 from werkzeug.utils import secure_filename
-from flask_login import current_user, login_required
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from flask import send_from_directory
+from flask import send_from_directory, url_for
 
 main = Blueprint('main', __name__)
 
@@ -48,9 +47,9 @@ def callback():
     resp = current_app.auth0.get(userinfo_url, token=token)
     userinfo = resp.json()
 
-    sub     = userinfo.get('sub')
-    name    = userinfo.get('name')
-    email   = userinfo.get('email')
+    sub = userinfo.get('sub')
+    name = userinfo.get('name')
+    email = userinfo.get('email')
     picture = userinfo.get('picture')
 
     user = User.query.filter_by(sub=sub).first()
@@ -58,8 +57,8 @@ def callback():
         user = User(sub=sub, name=name, email=email, picture=picture)
         db.session.add(user)
     else:
-        user.name    = name
-        user.email   = email
+        user.name = name
+        user.email = email
         user.picture = picture
     db.session.commit()
 
@@ -89,7 +88,7 @@ def dashboard():
 def reports():
     if 'user' not in session:
         return redirect(url_for('main.login'))
-    reports = []
+    reports = CSVFile.query.filter_by(user_sub=session['user']['sub']).all()
     return render_template('reports.html', reports=reports)
 
 @main.route('/upload', methods=['GET', 'POST'])
@@ -110,56 +109,134 @@ def upload():
             flash('Invalid file type.', 'danger')
             return redirect(request.url)
 
-        # Save file
         filename = secure_filename(file.filename)
         upload_folder = current_app.config['UPLOAD_FOLDER']
         os.makedirs(upload_folder, exist_ok=True)
         file_path = os.path.join(upload_folder, filename)
         file.save(file_path)
 
-        # Record metadata
         user_sub = session['user']['sub']
-        csv_file = CSVFile(user_sub=user_sub, filename=filename, filepath=os.path.join('uploads', filename))
+        csv_file = CSVFile(
+            user_sub=user_sub,
+            filename=filename,
+            filepath=os.path.join('uploads', filename)
+        )
         db.session.add(csv_file)
         db.session.commit()
 
-        # Data analysis
         try:
             df = pd.read_csv(file_path)
+            print("DF HEAD:", df.head())
         except Exception as e:
             flash(f'Error reading CSV: {e}', 'danger')
             return redirect(request.url)
 
-        # Summary statistics
-        summary_html = df.describe(include='all').to_html(classes='table table-striped', border=0)
-        # Correlation matrix for numeric columns
-        corr_df = df.select_dtypes(include=[np.number]).corr()
-        corr_html = corr_df.to_html(classes='table table-bordered', border=0)
+        if df.empty:
+            flash('Uploaded CSV is empty.', 'danger')
+            return redirect(request.url)
 
-        # Histograms
+        # Automatic datatype detection
+        dtypes = df.dtypes.astype(str).to_dict()
+
+        # Basic statistics
+        basic_stats = []
+        for col in df.columns:
+            col_data = df[col]
+            basic_stats.append({
+                'column': col,
+                'mean': float(col_data.mean()) if pd.api.types.is_numeric_dtype(col_data) else 'N/A',
+                'median': float(col_data.median()) if pd.api.types.is_numeric_dtype(col_data) else 'N/A',
+                'missing': int(col_data.isna().sum())
+            })
+
+        # Correlation matrix
+        corr_df = df.select_dtypes(include=[np.number]).corr()
+        corr_html = corr_df.to_html(classes='table table-bordered', border=0) if not corr_df.empty else ''
+
+        # Identify categorical and datetime columns
+        categorical_cols = df.select_dtypes(include=['object', 'category', 'bool']).columns.tolist()
+        datetime_cols = []
+
+        # Common date formats to try
+        date_formats = [
+            '%Y-%m-%d',           # 2023-01-01
+            '%m/%d/%Y',           # 01/01/2023
+            '%d-%m-%Y',           # 01-01-2023
+            '%Y/%m/%d',           # 2023/01/01
+            '%d/%m/%Y',           # 01/01/2023
+            '%Y-%m-%d %H:%M:%S',  # 2023-01-01 12:00:00
+            '%m/%d/%Y %H:%M:%S',  # 01/01/2023 12:00:00
+        ]
+
+        # Pre-filter columns likely to contain dates
+        potential_date_cols = [
+            col for col in df.columns
+            if pd.api.types.is_object_dtype(df[col]) or pd.api.types.is_string_dtype(df[col]) or
+               col.lower() in ['date', 'time', 'datetime', 'created_at', 'updated_at']
+        ]
+
+        for col in potential_date_cols:
+            for fmt in date_formats:
+                try:
+                    parsed = pd.to_datetime(df[col], format=fmt, errors='coerce')
+                    if parsed.notna().sum() > len(df) / 2:  # More than half the values are valid dates
+                        df[col] = parsed
+                        datetime_cols.append(col)
+                        print(f"Parsed column '{col}' as datetime with format '{fmt}'")
+                        break  # Stop trying formats once one works
+                except Exception as e:
+                    continue
+            else:
+                # If no format worked, try with dateutil as a fallback but suppress the warning
+                try:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", UserWarning)
+                        parsed = pd.to_datetime(df[col], errors='coerce')
+                        if parsed.notna().sum() > len(df) / 2:
+                            df[col] = parsed
+                            datetime_cols.append(col)
+                            print(f"Parsed column '{col}' as datetime with dateutil fallback")
+                except Exception:
+                    continue
+
+        # Prepare data for charts
+        cat_data = {col: df[col].fillna('NaN').value_counts().to_dict() for col in categorical_cols}
+        pie_data = cat_data.copy()
+
+        time_data = {}
+        for col in datetime_cols:
+            counts = df.groupby(df[col].dt.date).size()
+            time_data[col] = {
+                'dates': [str(d) for d in counts.index],
+                'values': counts.tolist()
+            }
+
+        # Static histograms
         analysis_dir = os.path.join(current_app.static_folder, 'analysis', str(csv_file.id))
         os.makedirs(analysis_dir, exist_ok=True)
         hist_paths = []
-
-        numeric_cols = df.select_dtypes(include=[np.number]).columns
-        for col in numeric_cols:
+        for col in df.select_dtypes(include=[np.number]).columns:
             plt.figure()
             df[col].dropna().hist()
             plt.title(f'Distribution of {col}')
-            plt.xlabel(col)
-            plt.ylabel('Frequency')
             img_name = f"{col}.png"
-            img_full_path = os.path.join(analysis_dir, img_name)
-            plt.savefig(img_full_path, bbox_inches='tight')
+            plt.savefig(os.path.join(analysis_dir, img_name), bbox_inches='tight')
             plt.close()
-            hist_paths.append(url_for('static', filename=f'analysis/{csv_file.id}/{img_name}'))
+            hist_paths.append(
+                url_for('static', filename=f'analysis/{csv_file.id}/{img_name}')
+            )
 
-        # Render analysis
         return render_template(
             'analysis.html',
             filename=filename,
-            summary=summary_html,
+            dtypes=dtypes,
+            basic_stats=basic_stats,
             corr=corr_html,
+            categorical_cols=categorical_cols,
+            datetime_cols=datetime_cols,
+            cat_data=cat_data,
+            time_data=time_data,
+            pie_data=pie_data,
             hist_paths=hist_paths
         )
 
@@ -167,7 +244,9 @@ def upload():
 
 @main.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+    return send_from_directory(
+        current_app.config['UPLOAD_FOLDER'], filename, as_attachment=True
+    )
 
 @main.route('/mycsvs')
 def mycsvs():

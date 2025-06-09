@@ -6,38 +6,278 @@
 <div class="container mx-auto px-4 py-6">
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-3xl font-bold">Analysis Report: {{ filename }}</h1>
-    <a href="{{ url_for('main.dashboard') }}" class="text-indigo-600 hover:text-indigo-800">&larr; Back to Dashboard</a>
+    <a href="{{ url_for('main.dashboard') }}" class="text-indigo-600 hover:text-indigo-800">← Back to Dashboard</a>
   </div>
 
-  <!-- Summary Statistics -->
+  {# Automatic Datatype Detection #}
   <section class="mb-10">
-    <h2 class="text-2xl font-semibold mb-4">Summary Statistics</h2>
+    <h2 class="text-2xl font-semibold mb-4">Detected Data Types</h2>
+    {% if dtypes and dtypes|length > 0 %}
     <div class="overflow-x-auto bg-white shadow rounded-lg p-6">
-      {{ summary | safe }}
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Column</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Type</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for col, dtype in dtypes.items() %}
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap">{{ col }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ dtype }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+      <p class="text-gray-500">No data types detected.</p>
+    {% endif %}
   </section>
 
-  <!-- Correlation Matrix -->
+  {# Basic Statistics & Correlation #}
   <section class="mb-10">
-    <h2 class="text-2xl font-semibold mb-4">Correlation Matrix</h2>
+    <h2 class="text-2xl font-semibold mb-4">Basic Statistics</h2>
+    {% if basic_stats and basic_stats|length > 0 %}
     <div class="overflow-x-auto bg-white shadow rounded-lg p-6">
-      {{ corr | safe }}
+      <table class="min-w-full divide-y divide-gray-200 mb-6">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3">Column</th>
+            <th class="px-6 py-3">Mean</th>
+            <th class="px-6 py-3">Median</th>
+            <th class="px-6 py-3">Missing Values</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for stat in basic_stats %}
+          <tr>
+            <td class="px-6 py-4">{{ stat.column }}</td>
+            <td class="px-6 py-4">{{ stat.mean }}</td>
+            <td class="px-6 py-4">{{ stat.median }}</td>
+            <td class="px-6 py-4">{{ stat.missing }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <h3 class="text-xl font-semibold mb-2">Correlation Matrix</h3>
+      {% if corr %}
+      <div class="overflow-x-auto">
+        {{ corr | safe }}
+      </div>
+      {% else %}
+        <p class="text-gray-500">No numeric columns to compute correlation.</p>
+      {% endif %}
     </div>
+    {% else %}
+      <p class="text-gray-500">No basic statistics to display.</p>
+    {% endif %}
   </section>
 
-  <!-- Histograms -->
+  {# Static Histograms #}
   <section class="mb-10">
-    <h2 class="text-2xl font-semibold mb-6">Histograms</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {% for img in hist_paths %}
-        <div class="bg-white shadow rounded-lg overflow-hidden">
-          <img src="{{ img }}" alt="Histogram of {{ img.split('/')[-1].split('.')[0] }}" class="w-full h-48 object-contain">
-          <div class="p-4">
-            <p class="text-center text-sm font-medium text-gray-700">{{ img.split('/')[-1].split('.')[0] }}</p>
-          </div>
-        </div>
+    <h2 class="text-2xl font-semibold mb-4">Static Histograms</h2>
+    {% if hist_paths and hist_paths|length > 0 %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {% for path in hist_paths %}
+      <div class="bg-white shadow rounded-lg p-4">
+        <img src="{{ path }}" alt="Histogram" class="w-full h-auto">
+      </div>
       {% endfor %}
+    </div>
+    {% else %}
+      <p class="text-gray-500">No histograms available.</p>
+    {% endif %}
+  </section>
+
+  {# Interactive Visualizations #}
+  <section class="mb-10">
+    <h2 class="text-2xl font-semibold mb-4">Interactive Visualizations</h2>
+    <div class="bg-white shadow rounded-lg p-6">
+      {# Dropdown Filters #}
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div>
+          <label for="bar-column" class="block text-sm font-medium text-gray-700 mb-1">Bar Chart (Categorical)</label>
+          <select id="bar-column" class="mt-1 block w-full border-gray-300 rounded-md">
+            <option value="">Select column</option>
+            {% for col in categorical_cols %}
+              <option value="{{ col }}">{{ col }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="line-column" class="block text-sm font-medium text-gray-700 mb-1">Line Chart (Time Series)</label>
+          <select id="line-column" class="mt-1 block w-full border-gray-300 rounded-md">
+            <option value="">Select date column</option>
+            {% for col in datetime_cols %}
+              <option value="{{ col }}">{{ col }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="pie-column" class="block text-sm font-medium text-gray-700 mb-1">Pie Chart (Proportions)</label>
+          <select id="pie-column" class="mt-1 block w-full border-gray-300 rounded-md">
+            <option value="">Select column</option>
+            {% for col in categorical_cols %}
+              <option value="{{ col }}">{{ col }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      {# Chart.js canvases #}
+      <div class="space-y-8">
+        <canvas id="barChart" width="400" height="200"></canvas>
+        <canvas id="lineChart" width="400" height="200"></canvas>
+        <canvas id="pieChart" width="400" height="200"></canvas>
+      </div>
     </div>
   </section>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const categoricalData = {{ cat_data|tojson }};
+  const timeData = {{ time_data|tojson }};
+  const pieData = {{ pie_data|tojson }};
+
+  const barSelect = document.getElementById('bar-column');
+  const lineSelect = document.getElementById('line-column');
+  const pieSelect = document.getElementById('pie-column');
+
+  let barChart, lineChart, pieChart;
+
+  // Color palette for charts (works for both light and dark themes)
+  const colors = [
+    'rgba(75, 192, 192, 0.6)', // Teal
+    'rgba(255, 99, 132, 0.6)', // Red
+    'rgba(54, 162, 235, 0.6)', // Blue
+    'rgba(255, 206, 86, 0.6)', // Yellow
+    'rgba(153, 102, 255, 0.6)', // Purple
+  ];
+  const borderColors = [
+    'rgba(75, 192, 192, 1)',
+    'rgba(255, 99, 132, 1)',
+    'rgba(54, 162, 235, 1)',
+    'rgba(255, 206, 86, 1)',
+    'rgba(153, 102, 255, 1)',
+  ];
+
+  function renderBarChart(column) {
+    if (!column || !categoricalData[column]) return;
+    const ctx = document.getElementById('barChart').getContext('2d');
+    const data = categoricalData[column];
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    if (barChart) barChart.destroy();
+    barChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: column,
+          data: values,
+          backgroundColor: colors,
+          borderColor: borderColors,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true }
+        },
+        plugins: {
+          legend: { display: true },
+          title: { display: true, text: `Bar Chart of ${column}` }
+        }
+      }
+    });
+  }
+
+  function renderLineChart(column) {
+    if (!column || !timeData[column]) return;
+    const ctx = document.getElementById('lineChart').getContext('2d');
+    const { dates, values } = timeData[column];
+    if (lineChart) lineChart.destroy();
+    lineChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [{
+          label: column,
+          data: values,
+          borderColor: colors[2],
+          backgroundColor: colors[2].replace('0.6', '0.2'),
+          fill: false,
+          tension: 0.1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true },
+          x: { title: { display: true, text: 'Date' } }
+        },
+        plugins: {
+          legend: { display: true },
+          title: { display: true, text: `Time Series of ${column}` }
+        }
+      }
+    });
+  }
+
+  function renderPieChart(column) {
+    if (!column || !pieData[column]) return;
+    const ctx = document.getElementById('pieChart').getContext('2d');
+    const data = pieData[column];
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    if (pieChart) pieChart.destroy();
+    pieChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors,
+          borderColor: borderColors,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right' },
+          title: { display: true, text: `Proportions of ${column}` }
+        }
+      }
+    });
+  }
+
+  // Initialize charts with the first available column
+  if (barSelect.options.length > 1) {
+    barSelect.value = barSelect.options[1].value;
+    renderBarChart(barSelect.value);
+  }
+  if (lineSelect.options.length > 1) {
+    lineSelect.value = lineSelect.options[1].value;
+    renderLineChart(lineSelect.value);
+  }
+  if (pieSelect.options.length > 1) {
+    pieSelect.value = pieSelect.options[1].value;
+    renderPieChart(pieSelect.value);
+  }
+
+  // Event listeners for dropdown changes
+  barSelect.addEventListener('change', () => renderBarChart(barSelect.value));
+  lineSelect.addEventListener('change', () => renderLineChart(lineSelect.value));
+  pieSelect.addEventListener('change', () => renderPieChart(pieSelect.value));
+</script>
 {% endblock %}
