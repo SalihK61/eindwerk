@@ -3,77 +3,115 @@
 <head>
   <meta charset="UTF-8">
   <title>CSV Analyser</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
   <style>
-    html {
-      scroll-behavior: smooth;
-    }
+    html, body { height: 100%; }
   </style>
 </head>
-<body class="bg-gray-900 text-white">
+<body class="bg-gray-900 text-white h-full overflow-y-scroll snap-y snap-mandatory">
 
-  <!-- Header -->
-<header class="p-6 flex justify-between items-center bg-gray-900/90 backdrop-blur-md shadow-none sticky top-0 z-50">
+  <!-- Header (sticky) -->
+  <header class="p-6 flex justify-between items-center bg-gray-900/90 backdrop-blur-md sticky top-0 z-50">
     <h1 class="text-3xl font-bold">CSV Analyser</h1>
-    <a href="{{ url_for('login') }}" class="bg-white text-gray-900 px-4 py-2 rounded-lg shadow hover:bg-gray-200 transition">Login</a>
+    <a href="{{ url_for('main.login') }}"
+       class="bg-white text-gray-900 px-4 py-2 rounded-lg shadow hover:bg-gray-200 transition">
+      Login
+    </a>
   </header>
 
-  <!-- Hero Section -->
-  <section class="h-screen flex flex-col justify-center items-center text-center px-4" data-aos="fade-up">
-    <h2 class="text-5xl font-bold mb-4">Welcome to the Smart CSV Analyser</h2>
-    <p class="text-xl max-w-2xl mb-8">Easily process and understand your CSV data with powerful tools for analysis, cleanup, and reporting.</p>
-    <a href="#features" class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl text-white font-semibold shadow-md transition">Explore Features</a>
-  </section>
+  <main class="h-full">
 
-  <!-- Features Section -->
-  <section id="features" class="py-16 px-6 bg-gray-800">
-    <h3 class="text-4xl font-bold text-center mb-12" data-aos="zoom-in">Features</h3>
+    <!-- Hero Section -->
+    <section id="hero"
+             class="h-screen flex flex-col justify-center items-center text-center px-4 snap-start"
+             data-aos="fade-up">
+      <h2 class="text-5xl font-bold mb-4">Welcome to the Smart CSV Analyser</h2>
+      <p class="text-xl max-w-2xl mb-8">
+        Easily process and understand your CSV data with powerful tools for analysis, cleanup, and reporting.
+      </p>
+      <a href="#feature-1"
+         class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl text-white font-semibold shadow-md transition">
+        Explore Features
+      </a>
+    </section>
 
-    <!-- Feature 1: Analyse CSV -->
-    <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center mb-20">
-      <img src="https://img.icons8.com/?size=100&id=8G289f2VPdDo&format=png&color=1A1A1A" alt="Analyze CSV" class="w-64 mx-auto drop-shadow-lg" data-aos="fade-right">
-      <div data-aos="fade-left">
-        <h4 class="text-3xl font-semibold mb-4">1. Analyse CSV Documents</h4>
-        <p class="text-lg text-gray-300">
-          Automatically scan and summarize your CSV file with key statistics, column insights, and data type detection.
-        </p>
+    <!-- Feature 1 -->
+    <section id="feature-1"
+             class="h-screen flex items-center justify-center bg-gray-800 px-6 snap-start"
+             data-aos="fade-up">
+      <div class="max-w-5xl grid md:grid-cols-2 gap-12 items-center">
+        <img src="https://img.icons8.com/?size=100&id=8G289f2VPdDo&format=png&color=1A1A1A"
+             alt="Analyze CSV"
+             class="w-64 mx-auto drop-shadow-lg"
+             data-aos="fade-right">
+        <div data-aos="fade-left">
+          <h4 class="text-3xl font-semibold mb-4">1. Analyse CSV Documents</h4>
+          <p class="text-lg text-gray-300">
+            Automatically scan and summarize your CSV file with key statistics, column insights, and data type detection.
+          </p>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Feature 2: Remove Duplicates -->
-    <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center mb-20">
-      <div data-aos="fade-right">
-        <h4 class="text-3xl font-semibold mb-4">2. Remove Duplicates</h4>
-        <p class="text-lg text-gray-300">
-          Clean your dataset by detecting and removing duplicate rows based on selected columns or all data.
-        </p>
+    <!-- Feature 2 -->
+    <section id="feature-2"
+             class="h-screen flex items-center justify-center px-6 snap-start"
+             style="background:rgba(31, 41, 55, .95);"
+             data-aos="fade-up">
+      <div class="max-w-5xl grid md:grid-cols-2 gap-12 items-center">
+        <div data-aos="fade-right">
+          <h4 class="text-3xl font-semibold mb-4">2. Remove Duplicates</h4>
+          <p class="text-lg text-gray-300">
+            Clean your dataset by detecting and removing duplicate rows based on selected columns or all data.
+          </p>
+        </div>
+        <img src="https://img.icons8.com/?size=100&id=GFaD5KGnHTfV&format=png&color=1A1A1A"
+             alt="Remove Duplicates"
+             class="w-64 mx-auto drop-shadow-lg"
+             data-aos="fade-left">
       </div>
-      <img src="https://img.icons8.com/?size=100&id=GFaD5KGnHTfV&format=png&color=1A1A1A" alt="Remove Duplicates" class="w-64 mx-auto drop-shadow-lg" data-aos="fade-left">
-    </div>
+    </section>
 
-    <!-- Feature 3: Detect Missing Data -->
-    <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center mb-20">
-      <img src="https://img.icons8.com/?size=100&id=10571&format=png&color=1A1A1A" alt="Missing Data" class="w-64 mx-auto drop-shadow-lg" data-aos="fade-right">
-      <div data-aos="fade-left">
-        <h4 class="text-3xl font-semibold mb-4">3. Detect Missing Data</h4>
-        <p class="text-lg text-gray-300">
-          Find rows and columns with missing or null values to ensure the integrity of your dataset.
-        </p>
+    <!-- Feature 3 -->
+    <section id="feature-3"
+             class="h-screen flex items-center justify-center bg-gray-800 px-6 snap-start"
+             data-aos="fade-up">
+      <div class="max-w-5xl grid md:grid-cols-2 gap-12 items-center">
+        <img src="https://img.icons8.com/?size=100&id=10571&format=png&color=1A1A1A"
+             alt="Missing Data"
+             class="w-64 mx-auto drop-shadow-lg"
+             data-aos="fade-right">
+        <div data-aos="fade-left">
+          <h4 class="text-3xl font-semibold mb-4">3. Detect Missing Data</h4>
+          <p class="text-lg text-gray-300">
+            Find rows and columns with missing or null values to ensure the integrity of your dataset.
+          </p>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Feature 4: Generate PDF Report -->
-    <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center mb-20">
-      <div data-aos="fade-right">
-        <h4 class="text-3xl font-semibold mb-4">4. Generate PDF Reports</h4>
-        <p class="text-lg text-gray-300">
-          Export a detailed report summarizing your CSV data, including charts, statistics, and insights — ready to share.
-        </p>
+    <!-- Feature 4 -->
+    <section id="feature-4"
+             class="h-screen flex items-center justify-center px-6 snap-start"
+             style="background:rgba(31, 41, 55, .95);"
+             data-aos="fade-up">
+      <div class="max-w-5xl grid md:grid-cols-2 gap-12 items-center">
+        <div data-aos="fade-right">
+          <h4 class="text-3xl font-semibold mb-4">4. Generate PDF Reports</h4>
+          <p class="text-lg text-gray-300">
+            Export a detailed report summarizing your CSV data, including charts, statistics, and insights — ready to share.
+          </p>
+        </div>
+        <img src="https://img.icons8.com/?size=100&id=10421&format=png&color=1A1A1A"
+             alt="PDF Report"
+             class="w-64 mx-auto drop-shadow-lg"
+             data-aos="fade-left">
       </div>
-      <img src="https://img.icons8.com/?size=100&id=10421&format=png&color=1A1A1A" alt="PDF Report" class="w-64 mx-auto drop-shadow-lg" data-aos="fade-left">
-    </div>
-  </section>
+    </section>
+
+  </main>
 
   <!-- Footer -->
   <footer class="text-center text-sm text-gray-400 p-6 bg-gray-800">
@@ -83,11 +121,7 @@
   <!-- AOS JS -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
   <script>
-    AOS.init({
-      once: true,
-      duration: 800,
-      easing: 'ease-in-out'
-    });
+    AOS.init({ once: true, duration: 800, easing: 'ease-in-out' });
   </script>
 </body>
 </html>

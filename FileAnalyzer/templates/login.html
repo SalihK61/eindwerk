@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - CSV Analyser</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+  <style>
+    html { scroll-behavior: smooth; }
+  </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="p-6 flex justify-between items-center bg-gray-900/90 backdrop-blur-md sticky top-0 z-50">
+    <h1 class="text-2xl font-bold">CSV Analyser</h1>
+    <a href="{{ url_for('main.home') }}" class="text-gray-200 hover:text-white transition">Back to Home</a>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex justify-center items-center px-4 py-16">
+    <div class="bg-gray-800 rounded-2xl shadow-lg max-w-4xl w-full grid md:grid-cols-2 overflow-hidden">
+
+      <!-- Left Section with info -->
+      <div class="hidden md:flex items-center justify-center bg-gray-700 p-8" data-aos="fade-right">
+        <div>
+          <h2 class="text-3xl font-bold mb-4">Welcome Back</h2>
+          <p class="text-gray-300 mb-2">Log in to analyze, clean, and report on your CSV data with ease.</p>
+          <img src="https://img.icons8.com/ios-filled/500/data-configuration.png"
+               class="w-48 mt-4 drop-shadow-xl"
+               alt="CSV Icon" />
+        </div>
+      </div>
+
+      <!-- Right Section with Forms -->
+      <div class="bg-gray-900 p-8 overflow-hidden" data-aos="fade-left">
+        <!-- Toggle Buttons (always on top) -->
+        <div class="relative z-20 flex justify-center mb-6 space-x-4">
+          <button onclick="showForm('login')"
+                  class="toggle-btn text-white font-semibold py-2 px-4 rounded bg-blue-600 hover:bg-blue-500 transition">
+            Login
+          </button>
+          <button onclick="showForm('register')"
+                  class="toggle-btn text-white font-semibold py-2 px-4 rounded bg-gray-700 hover:bg-gray-600 transition">
+            Register
+          </button>
+        </div>
+
+        <!-- Forms container (fixed height, relative) -->
+        <div class="relative h-80">
+          <!-- Login Form -->
+          <form id="login-form" action="{{ url_for('main.login') }}" method="POST"
+                class="absolute inset-0 space-y-4 transition-all duration-500 ease-in-out transform
+                       opacity-100 translate-x-0 z-10">
+            <div>
+              <label class="block mb-1 text-sm font-medium">Email</label>
+              <input type="email" name="email" required
+                     class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600
+                            focus:outline-none focus:ring-2 focus:ring-blue-600"/>
+            </div>
+            <div>
+              <label class="block mb-1 text-sm font-medium">Password</label>
+              <input type="password" name="password" required
+                     class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600
+                            focus:outline-none focus:ring-2 focus:ring-blue-600"/>
+            </div>
+            <button type="submit"
+                    class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-semibold">
+              Login
+            </button>
+          </form>
+
+          <!-- Register Form -->
+          <form id="register-form" action="{{ url_for('main.register') }}" method="POST"
+                class="absolute inset-0 space-y-4 transition-all duration-500 ease-in-out transform
+                       opacity-0 translate-x-10 pointer-events-none z-0">
+            <div>
+              <label class="block mb-1 text-sm font-medium">Name</label>
+              <input type="text" name="name" required
+                     class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600
+                            focus:outline-none focus:ring-2 focus:ring-blue-600"/>
+            </div>
+            <div>
+              <label class="block mb-1 text-sm font-medium">Email</label>
+              <input type="email" name="email" required
+                     class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600
+                            focus:outline-none focus:ring-2 focus:ring-blue-600"/>
+            </div>
+            <div>
+              <label class="block mb-1 text-sm font-medium">Password</label>
+              <input type="password" name="password" required
+                     class="w-full px-4 py-2 rounded bg-gray-800 text-white border border-gray-600
+                            focus:outline-none focus:ring-2 focus:ring-blue-600"/>
+            </div>
+            <button type="submit"
+                    class="w-full py-2 bg-green-600 hover:bg-green-500 rounded text-white font-semibold">
+              Register
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center text-sm text-gray-500 py-6 bg-gray-900/90">
+    &copy; 2025 CSV Analyser. All rights reserved.
+  </footer>
+
+  <!-- AOS JS -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script>AOS.init({ once: true, duration: 800 });</script>
+
+  <!-- Toggle & Animate Logic -->
+  <script>
+    const loginForm    = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+
+    function showForm(type) {
+      const isLogin = type === 'login';
+
+      if (isLogin) {
+        loginForm.classList.replace('opacity-0','opacity-100');
+        loginForm.classList.replace('translate-x-10','translate-x-0');
+        loginForm.classList.replace('z-0','z-10');
+        loginForm.classList.remove('pointer-events-none');
+
+        registerForm.classList.replace('opacity-100','opacity-0');
+        registerForm.classList.replace('translate-x-0','translate-x-10');
+        registerForm.classList.replace('z-10','z-0');
+        registerForm.classList.add('pointer-events-none');
+      } else {
+        registerForm.classList.replace('opacity-0','opacity-100');
+        registerForm.classList.replace('translate-x-10','translate-x-0');
+        registerForm.classList.replace('z-0','z-10');
+        registerForm.classList.remove('pointer-events-none');
+
+        loginForm.classList.replace('opacity-100','opacity-0');
+        loginForm.classList.replace('translate-x-0','translate-x-10');
+        loginForm.classList.replace('z-10','z-0');
+        loginForm.classList.add('pointer-events-none');
+      }
+
+      // Toggle button colors
+      document.querySelectorAll('.toggle-btn').forEach((btn, i) => {
+        btn.classList.remove('bg-blue-600','bg-gray-700');
+        if ((isLogin && i===0) || (!isLogin && i===1)) {
+          btn.classList.add('bg-blue-600');
+        } else {
+          btn.classList.add('bg-gray-700');
+        }
+      });
+    }
+
+    // Initialize on page load
+    document.addEventListener("DOMContentLoaded", () => showForm('login'));
+  </script>
+</body>
+</html>
