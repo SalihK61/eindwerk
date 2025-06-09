@@ -8,7 +8,7 @@ class User(db.Model):
     id       = db.Column(db.Integer, primary_key=True)
     sub      = db.Column(db.String(64), unique=True, nullable=False)  # Auth0 user_id
     name     = db.Column(db.String(128), nullable=False)
-    email    = db.Column(db.String(128), unique=True, nullable=False)
+    email    = db.Column(db.String(128), unique=True)
     picture  = db.Column(db.String(256), nullable=True)
 
     csv_files = db.relationship('CSVFile', back_populates='user')
