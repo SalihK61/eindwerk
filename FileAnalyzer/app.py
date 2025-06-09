@@ -43,6 +43,21 @@ def create_app():
     return app
 
 app = create_app()
+
+
+# Make sure the uploads directory is at the project root
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Or your PostgreSQL URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+
+# Ensure upload folder and database exist
+with app.app_context():
+    db.create_all()
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+
+
 @app.context_processor
 def inject_user():
     # Pull the Auth0 profile you stored in session['user']
