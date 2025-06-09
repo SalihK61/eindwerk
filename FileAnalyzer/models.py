@@ -28,7 +28,7 @@ class PDFReport(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_sub = db.Column(db.String(64), db.ForeignKey('users.sub'), nullable=False)
     filename = db.Column(db.String(256), nullable=False)
-    path = db.Column(db.String(512), nullable=False)
+    filepath = db.Column(db.String(512), nullable=False)
     generated_at = db.Column(db.DateTime, server_default=db.func.now())
 
     def __repr__(self):

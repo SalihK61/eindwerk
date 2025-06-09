@@ -5,12 +5,16 @@ from flask import (
     redirect, url_for, current_app, request, flash, send_file
 )
 from authlib.integrations.flask_client import OAuthError
-from models import db, User, CSVFile
+from models import db, User, CSVFile, PDFReport
 from werkzeug.utils import secure_filename
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import io
+import openai
+from fpdf import FPDF
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 main = Blueprint('main', __name__)
 
@@ -231,6 +235,9 @@ def analyse_csv(csv_id):
         plt.close()
         hist_paths.append(url_for('static', filename=f'analysis/{record.id}/{img_name}'))
 
+    #ai insights
+    ai_insight = generate_ai_insight(df)
+
     return render_template(
         'analysis.html',
         filename=record.filename,
@@ -248,13 +255,6 @@ def analyse_csv(csv_id):
         csv_file=record
     )
 
-@main.route('/generate_pdf/<int:csv_id>')
-def generate_pdf(csv_id):
-    # Placeholder PDF generation
-    record = CSVFile.query.get_or_404(csv_id)
-    # For now, redirect back or implement actual PDF with WeasyPrint
-    return redirect(url_for('main.dashboard'))
-
 @main.route('/download/<path:filename>')
 def download_file(filename):
     return send_file(
@@ -263,3 +263,123 @@ def download_file(filename):
         download_name=filename,
         as_attachment=True
     )
+
+
+@main.route('/generate_pdf/<int:csv_id>')
+def generate_pdf(csv_id):
+    import io
+    import os
+    from flask import send_file, current_app
+    from fpdf import FPDF
+    from models import CSVFile, PDFReport, db
+
+    # 1. Find the uploaded file and load dataframe
+    csv_record = CSVFile.query.get_or_404(csv_id)
+    df = pd.read_csv(csv_record.filepath)
+
+    # 2. AI Analysis
+    ai_insight = generate_ai_insight(df)
+
+    # 3. Generic plot
+    plot_buf = create_generic_plot(df)
+
+    # 4. PDF creation
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 14)
+    pdf.cell(0, 10, f"CSV Analyse Rapport voor {csv_record.filename}", ln=True)
+    pdf.set_font("Arial", size=11)
+    pdf.ln(5)
+    pdf.cell(0, 10, "Samenvattende statistieken:", ln=True)
+    pdf.set_font("Arial", size=9)
+    stats = df.describe(include='all').to_string()
+    for line in stats.split('\n'):
+        pdf.cell(0, 7, line, ln=True)
+    pdf.ln(3)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "AI-Analyse:", ln=True)
+    pdf.set_font("Arial", size=10)
+    for line in ai_insight.split('\n'):
+        pdf.multi_cell(0, 7, line)
+    pdf.ln(5)
+
+    # Save plot to a temporary file
+    plot_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"plot_{csv_id}.png")
+    with open(plot_path, "wb") as f:
+        f.write(plot_buf.getbuffer())
+    pdf.image(plot_path, x=10, w=pdf.w - 20)
+    os.remove(plot_path)
+
+    # Save to in-memory buffer for download
+    output = io.BytesIO()
+    pdf_bytes = pdf.output(dest='S').encode('latin1')
+    output.write(pdf_bytes)
+    output.seek(0)
+
+    # Save to PDFReport database table (optional, remove if not needed)
+    pdf_filename = f"{os.path.splitext(csv_record.filename)[0]}_analysis_report.pdf"
+    # Only add if not already in the DB, else you get duplicates:
+    existing = PDFReport.query.filter_by(filename=pdf_filename, user_id=csv_record.user.id).first()
+    if not existing:
+        pdf_report = PDFReport(filename=pdf_filename, user_id=csv_record.user.id)
+        db.session.add(pdf_report)
+        db.session.commit()
+
+    return send_file(
+        output,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=pdf_filename
+    )
+
+
+
+def generate_ai_insight(df):
+    stats = df.describe(include='all').to_string()
+    columns = ', '.join(df.columns)
+    sample_rows = df.head(5).to_string(index=False)
+    prompt = (
+        f"Hier is een dataset met kolommen: {columns}\n\n"
+        f"Samenvattende statistieken:\n{stats}\n\n"
+        f"De eerste 5 rijen van de data:\n{sample_rows}\n\n"
+        "Geef een gedetailleerde, begrijpelijke analyse en interessante inzichten voor een rapport. "
+        "Beschrijf opvallende cijfers, trends, mogelijke verbanden, of bijzonderheden. "
+        "De data kan over eender welk onderwerp gaan, dus geef de analyse zonder specifieke voorkennis."
+    )
+    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=350,
+    )
+    return response.choices[0].message.content
+
+
+def create_generic_plot(df):
+    num_cols = df.select_dtypes(include='number').columns.tolist()
+    cat_cols = df.select_dtypes(include='object').columns.tolist()
+    buf = io.BytesIO()
+    plt.figure(figsize=(6, 4))
+
+    if num_cols:
+        col = num_cols[0]
+        df[col].dropna().hist(bins=10)
+        plt.title(f"Verdeling van {col}")
+        plt.xlabel(col)
+        plt.ylabel("Frequentie")
+    elif cat_cols:
+        col = cat_cols[0]
+        df[col].value_counts().head(10).plot(kind="bar")
+        plt.title(f"Top 10 meest voorkomende waarden in {col}")
+        plt.xlabel(col)
+        plt.ylabel("Frequentie")
+    else:
+        plt.text(0.5, 0.5, "Geen geschikte kolom voor grafiek", ha='center')
+    plt.tight_layout()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    return buf
+
+
+
