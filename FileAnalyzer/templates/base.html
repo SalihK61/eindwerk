@@ -3,53 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>{% block title %}CSV Analyser{% endblock %}</title>
-  <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet" />
-  <link href="https://unpkg.com/aos@next/dist/aos.css" rel="stylesheet" />
+
+  <!-- Tailwind via Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- AOS Animate-On-Scroll -->
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
 </head>
-<body class="bg-gray-900 text-white">
+<body class="bg-gray-900 text-white pt-20">
 
-<header class="bg-gray-800 shadow-md">
-  <div class="container mx-auto flex justify-between items-center py-4 px-6">
-    <!-- LEFT: avatar if logged in, else site title -->
-    <div class="flex items-center space-x-4">
-      {% if current_user.is_authenticated %}
-        <img
-          src="{{ current_user.profile_pic_url }}"
-          alt="{{ current_user.username }}’s avatar"
-          class="w-10 h-10 rounded-full border-2 border-gray-700"
-        />
-      {% else %}
-        <h1 class="text-3xl font-bold">CSV Analyser</h1>
-      {% endif %}
+  <!-- Global Header -->
+  <header class="absolute top-0 left-0 w-full z-10">
+    <div class="container mx-auto flex justify-between items-center py-4 px-6">
+      <!-- LEFT: avatar if logged in, else site title -->
+      <div class="flex items-center space-x-4">
+        {% if user %}
+          <img
+            src="{{ user.picture }}"
+            alt="{{ user.name }}’s avatar"
+            class="w-10 h-10 rounded-full border-2 border-gray-700"
+          />
+        {% else %}
+          <h1 class="text-3xl font-bold">CSV Analyser</h1>
+        {% endif %}
+      </div>
+
+      <!-- RIGHT: Dashboard/Logout when logged in, Login otherwise -->
+      <div class="flex items-center space-x-4">
+        {% if user %}
+          <a
+            href="{{ url_for('main.dashboard') }}"
+            class="px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-500 font-medium"
+          >Dashboard</a>
+          <a
+            href="{{ url_for('main.logout') }}"
+            class="px-4 py-2 bg-red-600 rounded-md hover:bg-red-500 font-medium"
+          >Logout</a>
+        {% else %}
+          <a
+            href="{{ url_for('main.login') }}"
+            class="px-4 py-2 bg-green-600 rounded-md hover:bg-green-500 font-medium"
+          >Login</a>
+        {% endif %}
+      </div>
     </div>
+  </header>
 
-    <!-- RIGHT: Dashboard & Logout if logged in, Login otherwise -->
-    <div class="flex items-center space-x-4">
-      {% if current_user.is_authenticated %}
-        <a
-          href="{{ url_for('main.dashboard') }}"
-          class="text-gray-300 hover:text-white font-medium"
-        >Dashboard</a>
-        <a
-          href="{{ url_for('main.logout') }}"
-          class="text-gray-300 hover:text-white font-medium"
-        >Logout</a>
-      {% else %}
-        <a
-          href="{{ url_for('main.login') }}"
-          class="px-4 py-2 bg-green-600 rounded-md hover:bg-green-500"
-        >Login</a>
-      {% endif %}
-    </div>
-  </div>
-</header>
+  {% block content %}{% endblock %}
 
-{% block content %}{% endblock %}
-
-<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-<script>
-  AOS.init();
-</script>
+  <!-- AOS JS -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script> AOS.init(); </script>
 </body>
 </html>
