@@ -8,6 +8,7 @@ from models import db, User,CSVFile
 from werkzeug.utils import secure_filename
 from flask_login import current_user, login_required
 import pandas as pd
+from flask import send_from_directory, current_app
 
 main = Blueprint('main', __name__)
 
@@ -151,7 +152,7 @@ def upload():
     return render_template('upload.html', preview=preview)
 
 
-from flask import send_from_directory, current_app
+
 
 @main.route('/uploads/<filename>')
 def uploaded_file(filename):
