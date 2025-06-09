@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -10,13 +11,17 @@ class User(db.Model):
     email    = db.Column(db.String(128), unique=True, nullable=False)
     picture  = db.Column(db.String(256), nullable=True)
 
+    csv_files = db.relationship('CSVFile', back_populates='user')
+
 class CSVFile(db.Model):
     __tablename__ = 'csv_files'
     id = db.Column(db.Integer, primary_key=True)
     user_sub = db.Column(db.String(64), db.ForeignKey('users.sub'), nullable=False)
     filename = db.Column(db.String(256), nullable=False)
-    path = db.Column(db.String(512), nullable=False)
-    uploaded_at = db.Column(db.DateTime, server_default=db.func.now())
+    filepath = db.Column(db.String(512), nullable=False)
+    upload_time = db.Column(db.DateTime, server_default=db.func.now())
+
+    user = db.relationship('User', back_populates='csv_files')
 
 class PDFReport(db.Model):
     __tablename__ = 'pdf_reports'
