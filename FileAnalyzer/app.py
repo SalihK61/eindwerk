@@ -13,7 +13,6 @@ load_dotenv()
 
 def create_app():
     app = Flask(__name__)
-
     app.config.from_object(Config)
 
 
@@ -46,7 +45,6 @@ app = create_app()
 
 
 # Make sure the uploads directory is at the project root
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Or your PostgreSQL URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

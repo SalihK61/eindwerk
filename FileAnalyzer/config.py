@@ -3,10 +3,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-class Config:
-    SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+
+class Config(object):
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql://csvdb:csvdb@localhost:5432/csvdb'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    UPLOAD_FOLDER = UPLOAD_FOLDER
 
     # Auth0
     AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")
@@ -14,5 +18,4 @@ class Config:
     AUTH0_CLIENT_SECRET = os.getenv("AUTH0_CLIENT_SECRET")
     AUTH0_CALLBACK_URL = os.getenv("AUTH0_CALLBACK_URL")
 
-    UPLOAD_FOLDER = os.path.join('UPLOAD_FOLDER', 'uploads')
-    REPORT_FOLDER = os.getenv('REPORT_FOLDER', 'reports')
+    UPLOAD_FOLDER = UPLOAD_FOLDER

@@ -125,7 +125,6 @@ def upload():
             flash('No selected file', 'danger')
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            # FIX: Get user_sub correctly from session['user']
             user_sub = session.get('user', {}).get('sub')
             if not user_sub:
                 flash('You must be logged in to upload.', 'danger')
@@ -135,12 +134,11 @@ def upload():
             upload_folder = current_app.config['UPLOAD_FOLDER']
             if not os.path.exists(upload_folder):
                 os.makedirs(upload_folder)
-            relative_path = os.path.join('uploads', filename)
             absolute_path = os.path.join(upload_folder, filename)
+            print(f"Saving uploaded file to: {absolute_path}")  # Debug: See where file is written
             file.save(absolute_path)
 
             try:
-                import pandas as pd  # Just in case!
                 df = pd.read_csv(absolute_path)
                 preview = df.head().to_html(classes='table table-striped', border=0)
                 flash('File uploaded and processed!', 'success')
@@ -148,11 +146,10 @@ def upload():
                 flash(f'Error processing file: {e}', 'danger')
                 return render_template('upload.html', preview=None)
 
-            # Save file to DB with user_sub
             csv_file = CSVFile(
                 user_sub=user_sub,
                 filename=filename,
-                filepath=relative_path  # <-- relative path (for portability)
+                filepath=os.path.join('uploads', filename)
             )
             db.session.add(csv_file)
             db.session.commit()
