@@ -5,8 +5,10 @@ from dotenv import load_dotenv
 from config import Config
 from models import db
 from routes import main
+from flask_login import current_user
 
 load_dotenv()
+
 
 def create_app():
     app = Flask(__name__)
@@ -38,6 +40,14 @@ def create_app():
     return app
 
 app = create_app()
+
+
+
+@app.context_processor
+def inject_user():
+    # makes `current_user` available in every Jinja template
+    return dict(current_user=current_user)
+
 
 if __name__ == '__main__':
     # Listen on port 4000 per your Docker setup
