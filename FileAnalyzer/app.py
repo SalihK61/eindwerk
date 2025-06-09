@@ -1,9 +1,9 @@
 import os
-from flask import Flask, session
+from flask import Flask, session, redirect, url_for
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from config import Config
-from models import db
+from models import db, User
 from routes import main
 from flask_login import current_user
 from flask import current_app
@@ -16,6 +16,8 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    # Optional: force new secret key on restart in dev (logs out all users)
+    # app.secret_key = os.urandom(24)
 
     # Initialize database
     db.init_app(app)
@@ -44,18 +46,13 @@ def create_app():
 
 app = create_app()
 
-
-# Make sure the uploads directory is at the project root
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Or your PostgreSQL URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-
-# Ensure upload folder and database exist
 with app.app_context():
     db.create_all()
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
-
 
 @app.context_processor
 def inject_user():
@@ -67,9 +64,26 @@ def uploaded_file(filename):
     from config import UPLOAD_FOLDER
     return send_from_directory(UPLOAD_FOLDER, filename)
 
+# --- ADDED: Ensure user still exists in DB for every request ---
+@app.before_request
+def ensure_user_still_exists():
+    user = session.get("user")
+    if user:
+        # Check if user is still in your DB (by email)
+        user_in_db = db.session.execute(
+            db.select(User).filter_by(email=user.get("email"))
+        ).scalar_one_or_none()
+        if not user_in_db:
+            session.clear()
+            return redirect(url_for("main.login"))  # Update if your login route differs
+
+# --- ADDED: Example logout route ---
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for("main.login"))  # Update if your login route differs
 
 if __name__ == '__main__':
-    # Listen on port 4000 per your Docker setup
     app.run(
         host='0.0.0.0',
         port=4000,
