@@ -1,78 +1,85 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <!-- Hero Section -->
+<main class="h-full overflow-y-scroll snap-y snap-mandatory">
+
+  <!-- Hero Slide -->
   <section id="hero"
-           class="h-screen flex flex-col justify-center items-center text-center px-4"
+           class="h-screen flex flex-col justify-center items-center text-center px-6 snap-start bg-gradient-to-b from-gray-900 to-gray-800"
            data-aos="fade-up">
-    <h2 class="text-5xl font-bold mb-4">Welcome to the Smart CSV Analyser</h2>
-    <p class="text-xl max-w-2xl mb-8">
-      Easily process and understand your CSV data with powerful tools for analysis, cleanup, and reporting.
+    <h2 class="text-5xl font-extrabold mb-4">Welcome to the Smart CSV Analyser</h2>
+    <p class="text-xl max-w-2xl mb-8 text-gray-300">
+      Upload, clean, and report on your CSV data with ease.
     </p>
-    <a href="#features"
-       class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl text-white font-semibold shadow-md transition">
-      Explore Features
-    </a>
   </section>
 
-  <!-- Features Section -->
-  <section id="features" class="py-16 px-6 bg-gray-800">
-    <h3 class="text-4xl font-bold text-center mb-12" data-aos="zoom-in">Features</h3>
-
-    <!-- Feature 1: Analyse CSV -->
-    <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center mb-20">
-      <img src="https://img.icons8.com/?size=100&id=8G289f2VPdDo&format=png&color=1A1A1A"
-           alt="Analyze CSV"
-           class="w-64 mx-auto drop-shadow-lg"
+  <!-- Feature 1 Slide -->
+  <section id="feature-1"
+           class="h-screen flex flex-col md:flex-row items-center px-8 snap-start bg-gray-900"
            data-aos="fade-right">
-      <div data-aos="fade-left">
-        <h4 class="text-3xl font-semibold mb-4">1. Analyse CSV Documents</h4>
-        <p class="text-lg text-gray-300">
-          Automatically scan and summarize your CSV file with key statistics, column insights, and data type detection.
-        </p>
-      </div>
+    <div class="md:w-1/2 text-center md:text-left">
+      <h3 class="text-4xl font-bold text-white mb-4">1. Analyse CSV Documents</h3>
+      <p class="text-lg text-gray-400 mb-8">
+        Automatically scan and summarize your CSV file with key statistics, column insights, and data-type detection.
+      </p>
     </div>
+    <div class="md:w-1/2 flex justify-center mt-12 md:mt-0">
+      <img src="https://img.icons8.com/?size=100&id=7964&format=png&color=000000"
+           alt="Analyse CSV"
+           class="w-64 h-64 drop-shadow-xl filter brightness-125"/>
+    </div>
+  </section>
 
-    <!-- Feature 2: Remove Duplicates -->
-    <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center mb-20">
-      <div data-aos="fade-right">
-        <h4 class="text-3xl font-semibold mb-4">2. Remove Duplicates</h4>
-        <p class="text-lg text-gray-300">
-          Clean your dataset by detecting and removing duplicate rows based on selected columns or all data.
-        </p>
-      </div>
-      <img src="https://img.icons8.com/?size=100&id=GFaD5KGnHTfV&format=png&color=1A1A1A"
+  <!-- Feature 2 Slide -->
+  <section id="feature-2"
+           class="h-screen flex flex-col md:flex-row-reverse items-center px-8 snap-start bg-gray-800"
+           data-aos="fade-left">
+    <div class="md:w-1/2 text-center md:text-right">
+      <h3 class="text-4xl font-bold text-white mb-4">2. Remove Duplicates</h3>
+      <p class="text-lg text-gray-400 mb-8">
+        Clean your dataset by detecting and removing duplicate rows based on selected columns or entire records.
+      </p>
+    </div>
+    <div class="md:w-1/2 flex justify-center mt-12 md:mt-0">
+      <img src="https://img.icons8.com/?size=100&id=xLT8Ecp3kCc6&format=png&color=000000"
            alt="Remove Duplicates"
-           class="w-64 mx-auto drop-shadow-lg"
-           data-aos="fade-left">
-    </div>
-
-    <!-- Feature 3: Detect Missing Data -->
-    <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center mb-20">
-      <img src="https://img.icons8.com/?size=100&id=10571&format=png&color=1A1A1A"
-           alt="Detect Missing Data"
-           class="w-64 mx-auto drop-shadow-lg"
-           data-aos="fade-right">
-      <div data-aos="fade-left">
-        <h4 class="text-3xl font-semibold mb-4">3. Detect Missing Data</h4>
-        <p class="text-lg text-gray-300">
-          Find rows and columns with missing or null values to ensure the integrity of your dataset.
-        </p>
-      </div>
-    </div>
-
-    <!-- Feature 4: Generate PDF Reports -->
-    <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-      <div data-aos="fade-right">
-        <h4 class="text-3xl font-semibold mb-4">4. Generate PDF Reports</h4>
-        <p class="text-lg text-gray-300">
-          Export a detailed report summarizing your CSV data, including charts, statistics, and insights — ready to share.
-        </p>
-      </div>
-      <img src="https://img.icons8.com/?size=100&id=10421&format=png&color=1A1A1A"
-           alt="Generate PDF Reports"
-           class="w-64 mx-auto drop-shadow-lg"
-           data-aos="fade-left">
+           class="w-64 h-64 drop-shadow-xl filter brightness-125"/>
     </div>
   </section>
+
+  <!-- Feature 3 Slide -->
+  <section id="feature-3"
+           class="h-screen flex flex-col md:flex-row items-center px-8 snap-start bg-gray-900"
+           data-aos="fade-right">
+    <div class="md:w-1/2 text-center md:text-left">
+      <h3 class="text-4xl font-bold text-white mb-4">3. Detect Missing Data</h3>
+      <p class="text-lg text-gray-400 mb-8">
+        Identify rows and columns with missing or null values to ensure your data’s integrity.
+      </p>
+    </div>
+    <div class="md:w-1/2 flex justify-center mt-12 md:mt-0">
+      <img src="https://img.icons8.com/?size=100&id=Y7KtrIbScFgx&format=png&color=000000"
+           alt="Detect Missing Data"
+           class="w-64 h-64 drop-shadow-xl filter brightness-125"/>
+    </div>
+  </section>
+
+  <!-- Feature 4 Slide -->
+  <section id="feature-4"
+           class="h-screen flex flex-col md:flex-row-reverse items-center px-8 snap-start bg-gray-800"
+           data-aos="fade-left">
+    <div class="md:w-1/2 text-center md:text-right">
+      <h3 class="text-4xl font-bold text-white mb-4">4. Generate PDF Reports</h3>
+      <p class="text-lg text-gray-400 mb-8">
+        Export detailed PDF reports with charts, statistics, and insights—ready to share.
+      </p>
+    </div>
+    <div class="md:w-1/2 flex justify-center mt-12 md:mt-0">
+      <img src="https://img.icons8.com/?size=100&id=299&format=png&color=000000"
+           alt="Generate PDF Reports"
+           class="w-64 h-64 drop-shadow-xl filter brightness-125"/>
+    </div>
+  </section>
+
+</main>
 {% endblock %}

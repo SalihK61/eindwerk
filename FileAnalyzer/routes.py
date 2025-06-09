@@ -107,4 +107,4 @@ def reports():
 def upload():
     if 'user' not in session:
         return redirect(url_for('main.login'))
-    return "<h1>Upload Page Placeholder</h1>"
+    return render_template('upload.html', reports=upload)
