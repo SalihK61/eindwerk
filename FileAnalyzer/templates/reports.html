@@ -1,17 +1,22 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
-<main class="p-8 bg-gray-900 min-h-screen text-white">
-  <h2 class="text-3xl font-bold mb-6">My PDF Reports</h2>
+<div class="container mx-auto mt-10">
+  <h1 class="text-2xl font-bold mb-4">Mijn Analyse Rapporten</h1>
   {% if reports %}
-    <ul class="space-y-4">
-      {% for rpt in reports %}
-        <li class="p-4 bg-gray-800 rounded">
-          <a href="{{ rpt.url }}" class="underline">{{ rpt.title }}</a> — generated on {{ rpt.generated_at }}
-        </li>
+    <ul class="divide-y">
+      {% for pdf in reports %}
+      <li class="py-2 flex items-center justify-between">
+        <span>{{ pdf.filename }}</span>
+        <a href="{{ url_for('main.download_file', filename=pdf.filename) }}"
+           class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+           download>
+           Download
+        </a>
+      </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p>No reports generated yet.</p>
+    <p>Geen rapporten gevonden.</p>
   {% endif %}
-</main>
+</div>
 {% endblock %}
