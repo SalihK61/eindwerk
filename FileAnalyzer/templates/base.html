@@ -11,20 +11,36 @@
   <!-- AOS Animate-On-Scroll -->
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
   <script>
-  // Configure Tailwind to include dark mode and your custom shadows
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          boxShadow: {
-            'blue-glow':  '0 10px 15px -3px rgba(59,130,246,0.5), 0 4px 6px -2px rgba(59,130,246,0.3)',
-            'green-glow': '0 10px 15px -3px rgba(34,197,94,0.5), 0 4px 6px -2px rgba(34,197,94,0.3)',
-            'violet-glow':'0 10px 15px -3px rgba(168,85,247,0.5), 0 4px 6px -2px rgba(168,85,247,0.3)',
-          }
-        }
+  // Configure Tailwind to include dark mode, custom shadows, and a finite typewriter effect
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        boxShadow: {
+          'blue-glow':  '0 10px 15px -3px rgba(59,130,246,0.5), 0 4px 6px -2px rgba(59,130,246,0.3)',
+          'green-glow': '0 10px 15px -3px rgba(34,197,94,0.5), 0 4px 6px -2px rgba(34,197,94,0.3)',
+          'violet-glow':'0 10px 15px -3px rgba(168,85,247,0.5), 0 4px 6px -2px rgba(168,85,247,0.3)',
+        },
+        keyframes: {
+          typing: {
+            '0%':   { width: '0' },
+            '100%': { width: '100%' },
+          },
+          blink: {
+            '0%, 100%': { borderColor: 'transparent' },
+            '50%':      { borderColor: 'currentColor' },
+          },
+        },
+        animation: {
+          // types over 2s, then blinks 4 times (0.75s each), then stays with cursor hidden
+          'typing-blink': 'typing 2s steps(30,end) forwards, blink .75s step-end 4 forwards 2s',
+        },
       }
     }
+  }
   </script>
+
+
   <style>
     /* Ensure correlation table text respects the theme */
     .table.text-black {
