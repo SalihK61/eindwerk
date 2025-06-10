@@ -11,9 +11,18 @@
   <!-- AOS Animate-On-Scroll -->
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
   <script>
-    // Configure Tailwind to include dark mode
+  // Configure Tailwind to include dark mode and your custom shadows
     tailwind.config = {
-      darkMode: 'class'
+      darkMode: 'class',
+      theme: {
+        extend: {
+          boxShadow: {
+            'blue-glow':  '0 10px 15px -3px rgba(59,130,246,0.5), 0 4px 6px -2px rgba(59,130,246,0.3)',
+            'green-glow': '0 10px 15px -3px rgba(34,197,94,0.5), 0 4px 6px -2px rgba(34,197,94,0.3)',
+            'violet-glow':'0 10px 15px -3px rgba(168,85,247,0.5), 0 4px 6px -2px rgba(168,85,247,0.3)',
+          }
+        }
+      }
     }
   </script>
   <style>
