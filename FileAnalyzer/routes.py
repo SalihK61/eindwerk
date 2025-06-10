@@ -262,10 +262,11 @@ def analyse_csv(csv_id):
 def download_file(filename):
     return send_file(
         io.BytesIO(open(os.path.join(current_app.config['UPLOAD_FOLDER'], filename), 'rb').read()),
-        mimetype='text/csv',
+        mimetype='application/pdf' if filename.lower().endswith('.pdf') else 'text/csv',
         download_name=filename,
         as_attachment=True
     )
+
 
 
 def clean_text(text):
