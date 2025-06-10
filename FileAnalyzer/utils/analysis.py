@@ -48,4 +48,3 @@ def run_economic_analysis(filepath):
         }
 
     return results, figures
-

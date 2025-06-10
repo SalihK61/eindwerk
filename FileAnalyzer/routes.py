@@ -14,12 +14,14 @@ import io
 import openai
 from fpdf import FPDF
 import seaborn as sns
+from utils.analysis import run_economic_analysis
+import base64
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 main = Blueprint('main', __name__)
 
-ALLOWED_EXTENSIONS = {'csv'}
+ALLOWED_EXTENSIONS = {'csv', 'xls','xlsx'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -29,11 +31,16 @@ def home():
     user = session.get('user')
     return render_template('home.html', user=user)
 
+
+
+
+
 @main.route('/login')
 def login():
     return current_app.auth0.authorize_redirect(
         redirect_uri=current_app.config['AUTH0_CALLBACK_URL']
     )
+
 
 @main.route('/register')
 def register():
@@ -466,3 +473,43 @@ def generate_pdf(csv_id):
         as_attachment=True,
         download_name=pdf_filename
     )
+
+
+@main.route('/upload/econ', methods=['GET', 'POST'])
+def upload_economic():
+    if request.method == 'POST':
+        file = request.files.get('file')
+        if not file or not allowed_file(file.filename):
+            flash('Please upload a valid Excel file (.xls, .xlsx).', 'danger')
+            return redirect(request.url)
+
+        filename = secure_filename(file.filename)
+        save_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        file.save(save_path)
+
+        # Process
+        insights, figures = run_economic_analysis(save_path)
+
+        # You could render a template or queue PDF generation
+        return render_template(
+            'econ_report.html',
+            insights=insights,
+            figures=figures
+        )
+    return render_template('upload_econ.html')
+
+
+def add_econ_to_pdf(pdf: FPDF, insights, figures):
+    for sheet, insight in insights.items():
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(0, 10, f"Economic Analysis: {sheet}", ln=True)
+
+        pdf.set_font("Arial", '', 12)
+        # write stats
+        for stat, vals in insight['descriptive_stats'].items():
+            pdf.multi_cell(0, 8, f"{stat}: {vals}")
+
+        # add figure
+        imgdata = base64.b64decode(base64.b64encode(figures[sheet].getvalue()))
+        pdf.image(io.BytesIO(imgdata), w=pdf.epw * 0.8)
