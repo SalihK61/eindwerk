@@ -309,13 +309,14 @@ def generate_ai_insight(df):
         "Conclude with recommendations or suggestions for further investigation. "
         "Use only standard ASCII characters, without bullet points, emojis, or special punctuation. "
         "The topic of the data is unknown, so analyze without assuming prior subject knowledge."
+        "Make the file presentable add bullet points and titles. make it as clean as possible."
     )
 
     client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=700,
+        max_tokens=1500,
     )
     return response.choices[0].message.content
 
@@ -427,19 +428,6 @@ def generate_pdf(csv_id):
         pdf.image(plot_path, x=10, w=pdf.w - 20)
         os.remove(plot_path)
 
-    # 6. Conclusion & Recommendations
-    conclusion_text = (
-        "Below is a summary of the key findings and recommendations based on the analysis and AI insights.\n\n"
-        "- Pay attention to the highlighted trends and correlations.\n"
-        "- The charts provide visual support for these trends.\n"
-        "- Consider collecting additional data or exploring other columns for deeper insights.\n"
-        "- Refer to the AI insights for concrete next steps."
-    )
-    pdf.add_page()
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, clean_text("Conclusion & Recommendations:"), ln=True)
-    pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 7, clean_text(conclusion_text))
 
     # Save PDF
     pdf_filename = f"{os.path.splitext(csv_record.filename)[0]}_analysis_report.pdf"
