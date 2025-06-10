@@ -9,26 +9,44 @@
     {% for csv in csvs %}
     {% set anim = anim_types[loop.index0 % anim_types|length] %}
     <div
-      class="bg-gray-800 hover:bg-gray-700 text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col justify-between group"
+      class="relative flex items-center bg-gray-800 hover:bg-gray-700 rounded-2xl shadow-lg p-8 transition-shadow hover:shadow-2xl group"
       data-aos="{{ anim }}"
       data-aos-delay="{{ loop.index0 * 100 }}"
       data-aos-duration="900"
       data-aos-easing="ease-out-cubic"
     >
-      <h3 class="text-xl font-semibold truncate mb-2 group-hover:scale-105 transition-transform duration-300">
-        {{ csv.filename }}
-      </h3>
-      <div class="mt-4 flex space-x-2">
-        <a href="{{ url_for('main.download_file', filename=csv.filename) }}"
-           class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-center shadow-lg hover:scale-105 transition-all duration-300"
-           download>
-           Download
-        </a>
-        <a href="{{ url_for('main.analyse_csv', csv_id=csv.id) }}"
-           class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-500 rounded text-center shadow-lg hover:scale-105 transition-all duration-300"
-        >Analyse</a>
+      <!-- CSV icoon in cirkel -->
+      <span class="flex-shrink-0 mr-6">
+        <span class="inline-flex items-center justify-center rounded-full bg-green-600 bg-opacity-20 w-14 h-14 shadow-inner">
+            <img src="https://img.icons8.com/?size=100&id=UgmXVF7rP2mI&format=png&color=40C057"
+                 alt="CSV icon" class="w-7 h-7" />
+        </span>
+      </span>
+      <!-- Content -->
+      <div class="flex-1 flex flex-col justify-between min-w-0">
+        <h3 class="text-xl font-semibold truncate text-white mb-2 group-hover:scale-105 transition-transform duration-300">
+          {{ csv.filename }}
+        </h3>
+        <div class="mt-4 flex space-x-2">
+          <!-- Download button: blauw -> groen -->
+          <a
+            href="{{ url_for('main.download_file', filename=csv.filename) }}"
+            class="csv-download-btn relative flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-center shadow-lg hover:scale-105 transition-all duration-300 overflow-hidden font-semibold"
+            download
+          >
+            <span class="relative z-10">Download</span>
+            <span class="progress absolute left-0 top-0 h-full w-0 bg-green-500 transition-all duration-300 z-0"></span>
+          </a>
+          <!-- Analyse button: groen -> blauw -->
+          <a
+            href="{{ url_for('main.analyse_csv', csv_id=csv.id) }}"
+            class="csv-analyse-btn relative flex-1 px-4 py-2 bg-green-600 hover:bg-green-500 rounded text-center shadow-lg hover:scale-105 transition-all duration-300 overflow-hidden font-semibold"
+          >
+            <span class="relative z-10">Analyse</span>
+            <span class="progress absolute right-0 top-0 h-full w-0 bg-blue-600 transition-all duration-300 z-0"></span>
+          </a>
+        </div>
       </div>
-      <div class="mt-4 h-2 w-2 rounded-full bg-blue-600 opacity-0 group-hover:opacity-80 blur-sm transition duration-300 mx-auto"></div>
     </div>
     {% endfor %}
   </div>
@@ -36,4 +54,46 @@
     <p class="text-white" data-aos="fade-up" data-aos-delay="200">No CSV files found.</p>
   {% endif %}
 </main>
+
+<script>
+// Download-knop: blauw->groen van links naar rechts
+document.querySelectorAll('.csv-download-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    const progress = btn.querySelector('.progress');
+    progress.style.width = "100%";
+    progress.style.left = "0";
+    progress.style.right = "auto";
+    progress.style.transition = "width 0.4s cubic-bezier(.7,0,.3,1)";
+    btn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+    btn.classList.add('bg-green-500');
+    btn.querySelector('span').classList.add('text-white');
+    setTimeout(() => {
+      progress.style.width = "0";
+      btn.classList.remove('bg-green-500');
+      btn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+      btn.querySelector('span').classList.remove('text-white');
+    }, 2000);
+  });
+});
+
+// Analyse-knop: groen->blauw van rechts naar links
+document.querySelectorAll('.csv-analyse-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    const progress = btn.querySelector('.progress');
+    progress.style.width = "100%";
+    progress.style.right = "0";
+    progress.style.left = "auto";
+    progress.style.transition = "width 0.4s cubic-bezier(.7,0,.3,1)";
+    btn.classList.remove('bg-green-600', 'hover:bg-green-500');
+    btn.classList.add('bg-blue-600');
+    btn.querySelector('span').classList.add('text-white');
+    setTimeout(() => {
+      progress.style.width = "0";
+      btn.classList.remove('bg-blue-600');
+      btn.classList.add('bg-green-600', 'hover:bg-green-500');
+      btn.querySelector('span').classList.remove('text-white');
+    }, 2000);
+  });
+});
+</script>
 {% endblock %}
