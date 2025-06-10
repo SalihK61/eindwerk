@@ -2,14 +2,29 @@
 
 {% block content %}
 <main class="h-full overflow-y-scroll snap-y snap-mandatory bg-gray-100 dark:bg-gray-900">
-  <!-- Hero Slide -->
+  <!-- Hero Slide with Lottie Animation -->
   <section id="hero"
-           class="h-screen flex flex-col justify-center items-center text-center px-6 snap-start bg-gradient-to-b from-gray-200 dark:from-gray-900 to-gray-300 dark:to-gray-800"
+           class="relative h-screen flex flex-col justify-center items-center text-center px-6 snap-start bg-gradient-to-b from-gray-200 dark:from-gray-900 to-gray-300 dark:to-gray-800"
            data-aos="fade-up">
-    <h2 class="text-5xl font-extrabold mb-4 text-gray-900 dark:text-white">Welcome to the Smart CSV Analyser</h2>
-    <p class="text-xl max-w-2xl mb-8 text-gray-600 dark:text-gray-400">
-      Upload, clean, and report on your CSV data with ease.
-    </p>
+    <!-- Background Lottie Animation -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <lottie-player
+        src="{{ url_for('static', filename='animations/Stats.json') }}"
+        background="transparent"
+        speed="1"
+        class="w-full h-full object-cover"
+        loop
+        autoplay
+        renderer="svg"
+      ></lottie-player>
+    </div>
+    <!-- Content Overlay -->
+    <div class="relative z-10 flex flex-col justify-center items-center text-center px-6">
+      <h2 class="text-5xl font-extrabold mb-4 text-gray-900 dark:text-white">Welcome to the Smart CSV Analyser</h2>
+      <p class="text-xl max-w-2xl mb-8 text-gray-600 dark:text-gray-400">
+        Upload, clean, and report on your CSV data with ease.
+      </p>
+    </div>
   </section>
 
   <!-- Feature 1 Slide -->
@@ -80,4 +95,9 @@
     </div>
   </section>
 </main>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script defer src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 {% endblock %}
