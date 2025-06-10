@@ -87,8 +87,10 @@ def dashboard():
 def reports():
     if 'user' not in session:
         return redirect(url_for('main.login'))
-    pdfs = []  # placeholder for generated reports
+    # Haal alle rapporten op van deze gebruiker
+    pdfs = PDFReport.query.filter_by(user_sub=session['user']['sub']).all()
     return render_template('reports.html', reports=pdfs)
+
 
 @main.route('/upload', methods=['GET', 'POST'])
 def upload():
@@ -266,28 +268,21 @@ def download_file(filename):
     )
 
 
-def generate_ai_insight(df):
-    stats = df.describe(include='all').to_string()
-    columns = ', '.join(df.columns)
-    sample_rows = df.head(5).to_string(index=False)
-    prompt = (
-        f"Hier is een dataset met kolommen: {columns}\n\n"
-        f"Samenvattende statistieken:\n{stats}\n\n"
-        f"De eerste 5 rijen van de data:\n{sample_rows}\n\n"
-        "Geef een gedetailleerde, begrijpelijke analyse en interessante inzichten voor een rapport. "
-        "Beschrijf opvallende cijfers, trends, mogelijke verbanden, of bijzonderheden. "
-        "De data kan over eender welk onderwerp gaan, dus geef de analyse zonder specifieke voorkennis."
+def clean_text(text):
+    if not isinstance(text, str):
+        text = str(text)
+    text = (
+        text.replace("•", "-")
+            .replace("–", "-")
+            .replace("—", "-")
+            .replace("’", "'")
+            .replace("“", '"')
+            .replace("”", '"')
+            .replace("…", "...")
     )
-    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=350,
-    )
-    return response.choices[0].message.content
+    return text.encode('latin-1', 'replace').decode('latin-1')
 
 def generate_ai_insight(df):
-    # Verzamel statistieken, topwaarden en correlatie (indien mogelijk)
     stats = df.describe(include='all').to_string()
     columns = ', '.join(df.columns)
     sample_rows = df.head(5).to_string(index=False)
@@ -310,6 +305,7 @@ def generate_ai_insight(df):
         "Beschrijf niet alleen de algemene kenmerken, maar ga in op opvallende cijfers, trends, correlaties, uitzonderingen en mogelijke verbanden. "
         "Geef ook hypotheses waarom deze patronen bestaan, geef concrete voorbeelden en trek meerdere conclusies. "
         "Sluit af met aanbevelingen of suggesties voor verder onderzoek. "
+        "Gebruik geen bullet points, emoji of speciale leestekens, enkel standaard ASCII-tekens."
         "De data kan over eender welk onderwerp gaan, dus analyseer zonder specifieke voorkennis."
     )
 
@@ -335,8 +331,9 @@ def create_numeric_plot(df):
         plt.savefig(buf, format="png")
         plt.close()
         buf.seek(0)
-        return buf, f"plot_numeric_{col}.png"
-    return None, None
+        uitleg = f"Deze grafiek toont de verdeling (histogram) van de numerieke kolom '{col}'. Hiermee kun je zien hoe de waarden binnen deze kolom zijn verspreid over de dataset."
+        return buf, f"plot_numeric_{col}.png", uitleg
+    return None, None, None
 
 def create_category_plot(df):
     cat_cols = df.select_dtypes(include='object').columns.tolist()
@@ -352,8 +349,9 @@ def create_category_plot(df):
         plt.savefig(buf, format="png")
         plt.close()
         buf.seek(0)
-        return buf, f"plot_categorical_{col}.png"
-    return None, None
+        uitleg = f"Deze staafdiagram laat de tien meest voorkomende waarden zien in de categorische kolom '{col}'. Dit geeft inzicht in welke waarden het vaakst voorkomen."
+        return buf, f"plot_categorical_{col}.png", uitleg
+    return None, None, None
 
 def create_correlation_heatmap(df):
     num_cols = df.select_dtypes(include='number')
@@ -366,8 +364,9 @@ def create_correlation_heatmap(df):
         plt.savefig(buf, format="png")
         plt.close()
         buf.seek(0)
-        return buf, "correlation_heatmap.png"
-    return None, None
+        uitleg = "Deze heatmap toont de correlatie tussen alle numerieke kolommen in de dataset. Hogere absolute waarden wijzen op een sterkere lineaire relatie tussen twee variabelen."
+        return buf, "correlation_heatmap.png", uitleg
+    return None, None, None
 
 @main.route('/generate_pdf/<int:csv_id>')
 def generate_pdf(csv_id):
@@ -381,67 +380,60 @@ def generate_pdf(csv_id):
     # 2. AI Analysis (uitgebreid)
     ai_insight = generate_ai_insight(df)
 
-    # 3. Multiple plots
-    plot_buffers = []
-    plot_files = []
-
-    # Numeric plot
-    buf, filename = create_numeric_plot(df)
+    # 3. Multiple plots (met uitleg)
+    plot_infos = []  # lijst van (buf, fname, uitleg)
+    buf, filename, uitleg = create_numeric_plot(df)
     if buf:
-        plot_buffers.append(buf)
-        plot_files.append(filename)
-    # Category plot
-    buf, filename = create_category_plot(df)
+        plot_infos.append((buf, filename, uitleg))
+    buf, filename, uitleg = create_category_plot(df)
     if buf:
-        plot_buffers.append(buf)
-        plot_files.append(filename)
-    # Correlation plot
-    buf, filename = create_correlation_heatmap(df)
+        plot_infos.append((buf, filename, uitleg))
+    buf, filename, uitleg = create_correlation_heatmap(df)
     if buf:
-        plot_buffers.append(buf)
-        plot_files.append(filename)
+        plot_infos.append((buf, filename, uitleg))
 
     # 4. PDF creation
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, f"CSV Analyse Rapport voor {csv_record.filename}", ln=True)
-    pdf.set_font("Arial", size=11)
-    pdf.ln(5)
-    pdf.cell(0, 10, "Samenvattende statistieken:", ln=True)
-    pdf.set_font("Arial", size=9)
-    stats = df.describe(include='all').to_string()
-    for line in stats.split('\n'):
-        pdf.cell(0, 7, line, ln=True)
-    pdf.ln(3)
+    pdf.cell(0, 10, clean_text(f"CSV Analyse Rapport voor {csv_record.filename}"), ln=True)
+
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "AI-Analyse:", ln=True)
+    pdf.ln(5)
+    pdf.cell(0, 10, clean_text("AI-Analyse:"), ln=True)
     pdf.set_font("Arial", size=10)
     for line in ai_insight.split('\n'):
-        pdf.multi_cell(0, 7, line)
+        pdf.multi_cell(0, 7, clean_text(line))
     pdf.ln(5)
 
-    # 5. Insert all plots
-    for i, (buf, fname) in enumerate(zip(plot_buffers, plot_files)):
+    # 5. Insert all plots with explanation
+    for i, (buf, fname, uitleg) in enumerate(plot_infos):
         plot_path = os.path.join(current_app.config['UPLOAD_FOLDER'], fname)
         with open(plot_path, "wb") as f:
             f.write(buf.getbuffer())
         pdf.add_page()
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, f"Figuur {i+1}", ln=True)
+        pdf.cell(0, 10, clean_text(f"Figuur {i+1}"), ln=True)
+        pdf.set_font("Arial", size=10)
+        if uitleg:
+            pdf.multi_cell(0, 7, clean_text(uitleg))
+            pdf.ln(3)
         pdf.image(plot_path, x=10, w=pdf.w - 20)
         os.remove(plot_path)
 
-    # 6. (Extra) Conclusie op basis van AI-output (optioneel)
+    # 6. Conclusie & aanbevelingen
+    conclusie_tekst = (
+        "Hieronder volgt een samenvatting van de belangrijkste inzichten en aanbevelingen uit bovenstaande analyse en AI-rapport.\n\n"
+        "- Let vooral op de genoemde trends en verbanden.\n"
+        "- De grafieken geven visuele ondersteuning bij de trends.\n"
+        "- Overweeg om extra data te verzamelen of andere kolommen te onderzoeken voor diepgaandere analyse.\n"
+        "- Raadpleeg het AI-advies voor concrete vervolgstappen."
+    )
     pdf.add_page()
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "Conclusie & Aanbevelingen:", ln=True)
+    pdf.cell(0, 10, clean_text("Conclusie & Aanbevelingen:"), ln=True)
     pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 7, "Hieronder volgt een samenvatting van de belangrijkste inzichten en aanbevelingen uit bovenstaande analyse en AI-rapport.\n\n"
-                         + "• Let vooral op de genoemde trends en verbanden.\n"
-                         + "• De grafieken geven visuele ondersteuning bij de trends.\n"
-                         + "• Overweeg om extra data te verzamelen of andere kolommen te onderzoeken voor diepgaandere analyse.\n"
-                         + "• Raadpleeg het AI-advies voor concrete vervolgstappen.")
+    pdf.multi_cell(0, 7, clean_text(conclusie_tekst))
 
     # Save PDF to disk (for tracking in DB)
     pdf_filename = f"{os.path.splitext(csv_record.filename)[0]}_analysis_report.pdf"
@@ -468,7 +460,6 @@ def generate_pdf(csv_id):
         as_attachment=True,
         download_name=pdf_filename
     )
-
 
 
 
