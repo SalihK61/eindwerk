@@ -283,6 +283,7 @@ def clean_text(text):
     )
     return text.encode('latin-1', 'replace').decode('latin-1')
 
+
 def generate_ai_insight(df):
     stats = df.describe(include='all').to_string()
     columns = ', '.join(df.columns)
@@ -294,20 +295,20 @@ def generate_ai_insight(df):
     top_cats = ""
     for col in df.select_dtypes(include='object').columns:
         top = df[col].value_counts().head(3)
-        top_cats += f"\nTopwaarden in '{col}':\n{top.to_string()}\n"
+        top_cats += f"\nTop values in '{col}':\n{top.to_string()}\n"
 
     prompt = (
-        f"Hier is een dataset met kolommen: {columns}\n\n"
-        f"Samenvattende statistieken:\n{stats}\n\n"
-        f"De eerste 5 rijen van de data:\n{sample_rows}\n"
+        f"Here is a dataset with columns: {columns}\n\n"
+        f"Summary statistics:\n{stats}\n\n"
+        f"The first 5 rows of the data:\n{sample_rows}\n"
         f"{top_cats}"
-        f"\nCorrelatie tussen numerieke kolommen:\n{correlations}\n\n"
-        "Maak een diepgaande analyse van deze dataset voor een professioneel rapport. "
-        "Beschrijf niet alleen de algemene kenmerken, maar ga in op opvallende cijfers, trends, correlaties, uitzonderingen en mogelijke verbanden. "
-        "Geef ook hypotheses waarom deze patronen bestaan, geef concrete voorbeelden en trek meerdere conclusies. "
-        "Sluit af met aanbevelingen of suggesties voor verder onderzoek. "
-        "Gebruik geen bullet points, emoji of speciale leestekens, enkel standaard ASCII-tekens."
-        "De data kan over eender welk onderwerp gaan, dus analyseer zonder specifieke voorkennis."
+        f"Correlation between numeric columns:\n{correlations}\n\n"
+        "Provide a detailed analysis of this dataset for a professional report. "
+        "Discuss notable figures, trends, correlations, outliers, and potential relationships. "
+        "Offer hypotheses for why these patterns exist, give concrete examples, and draw multiple conclusions. "
+        "Conclude with recommendations or suggestions for further investigation. "
+        "Use only standard ASCII characters, without bullet points, emojis, or special punctuation. "
+        "The topic of the data is unknown, so analyze without assuming prior subject knowledge."
     )
 
     client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -318,6 +319,7 @@ def generate_ai_insight(df):
     )
     return response.choices[0].message.content
 
+
 def create_numeric_plot(df):
     num_cols = df.select_dtypes(include='number').columns.tolist()
     buf = io.BytesIO()
@@ -325,16 +327,17 @@ def create_numeric_plot(df):
         plt.figure(figsize=(6, 4))
         col = num_cols[0]
         df[col].dropna().hist(bins=20)
-        plt.title(f"Verdeling van {col}")
+        plt.title(f"Distribution of {col}")
         plt.xlabel(col)
-        plt.ylabel("Frequentie")
+        plt.ylabel("Frequency")
         plt.tight_layout()
         plt.savefig(buf, format="png")
         plt.close()
         buf.seek(0)
-        uitleg = f"Deze grafiek toont de verdeling (histogram) van de numerieke kolom '{col}'. Hiermee kun je zien hoe de waarden binnen deze kolom zijn verspreid over de dataset."
-        return buf, f"plot_numeric_{col}.png", uitleg
+        explanation = f"This histogram shows the distribution of the numeric column '{col}', illustrating how values are spread across the dataset."
+        return buf, f"plot_numeric_{col}.png", explanation
     return None, None, None
+
 
 def create_category_plot(df):
     cat_cols = df.select_dtypes(include='object').columns.tolist()
@@ -343,107 +346,109 @@ def create_category_plot(df):
         plt.figure(figsize=(6, 4))
         col = cat_cols[0]
         df[col].value_counts().head(10).plot(kind="bar")
-        plt.title(f"Top 10 waarden in {col}")
+        plt.title(f"Top 10 values in {col}")
         plt.xlabel(col)
-        plt.ylabel("Aantal")
+        plt.ylabel("Count")
         plt.tight_layout()
         plt.savefig(buf, format="png")
         plt.close()
         buf.seek(0)
-        uitleg = f"Deze staafdiagram laat de tien meest voorkomende waarden zien in de categorische kolom '{col}'. Dit geeft inzicht in welke waarden het vaakst voorkomen."
-        return buf, f"plot_categorical_{col}.png", uitleg
+        explanation = f"This bar chart displays the ten most frequent values in the categorical column '{col}', providing insight into the most common entries."
+        return buf, f"plot_categorical_{col}.png", explanation
     return None, None, None
+
 
 def create_correlation_heatmap(df):
     num_cols = df.select_dtypes(include='number')
     if num_cols.shape[1] >= 2:
         plt.figure(figsize=(6, 5))
         sns.heatmap(num_cols.corr(), annot=True, fmt=".2f", cmap="coolwarm")
-        plt.title("Correlatiematrix")
+        plt.title("Correlation Matrix")
         buf = io.BytesIO()
         plt.tight_layout()
         plt.savefig(buf, format="png")
         plt.close()
         buf.seek(0)
-        uitleg = "Deze heatmap toont de correlatie tussen alle numerieke kolommen in de dataset. Hogere absolute waarden wijzen op een sterkere lineaire relatie tussen twee variabelen."
-        return buf, "correlation_heatmap.png", uitleg
+        explanation = "This heatmap shows the correlation between all numeric columns, where higher absolute values indicate stronger linear relationships."
+        return buf, "correlation_heatmap.png", explanation
     return None, None, None
+
 
 @main.route('/generate_pdf/<int:csv_id>')
 def generate_pdf(csv_id):
     from flask import send_file, current_app
     from models import CSVFile, PDFReport, db
 
-    # 1. Find the uploaded file and load dataframe
+    # 1. Load the uploaded CSV and create a DataFrame
     csv_record = CSVFile.query.get_or_404(csv_id)
     df = pd.read_csv(csv_record.filepath)
 
-    # 2. AI Analysis (uitgebreid)
+    # 2. Generate AI insight (detailed)
     ai_insight = generate_ai_insight(df)
 
-    # 3. Multiple plots (met uitleg)
-    plot_infos = []  # lijst van (buf, fname, uitleg)
-    buf, filename, uitleg = create_numeric_plot(df)
+    # 3. Create plots with explanations
+    plot_infos = []  # list of (buffer, filename, explanation)
+    buf, filename, explanation = create_numeric_plot(df)
     if buf:
-        plot_infos.append((buf, filename, uitleg))
-    buf, filename, uitleg = create_category_plot(df)
+        plot_infos.append((buf, filename, explanation))
+    buf, filename, explanation = create_category_plot(df)
     if buf:
-        plot_infos.append((buf, filename, uitleg))
-    buf, filename, uitleg = create_correlation_heatmap(df)
+        plot_infos.append((buf, filename, explanation))
+    buf, filename, explanation = create_correlation_heatmap(df)
     if buf:
-        plot_infos.append((buf, filename, uitleg))
+        plot_infos.append((buf, filename, explanation))
 
-    # 4. PDF creation
+    # 4. Build the PDF
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, clean_text(f"CSV Analyse Rapport voor {csv_record.filename}"), ln=True)
+    pdf.cell(0, 10, clean_text(f"CSV Analysis Report for {csv_record.filename}"), ln=True)
 
     pdf.set_font("Arial", "B", 12)
     pdf.ln(5)
-    pdf.cell(0, 10, clean_text("AI-Analyse:"), ln=True)
+    pdf.cell(0, 10, clean_text("AI Analysis:"), ln=True)
     pdf.set_font("Arial", size=10)
     for line in ai_insight.split('\n'):
         pdf.multi_cell(0, 7, clean_text(line))
     pdf.ln(5)
 
-    # 5. Insert all plots with explanation
-    for i, (buf, fname, uitleg) in enumerate(plot_infos):
+    # 5. Insert each plot
+    for i, (buf, fname, explanation) in enumerate(plot_infos):
         plot_path = os.path.join(current_app.config['UPLOAD_FOLDER'], fname)
         with open(plot_path, "wb") as f:
             f.write(buf.getbuffer())
         pdf.add_page()
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, clean_text(f"Figuur {i+1}"), ln=True)
+        pdf.cell(0, 10, clean_text(f"Figure {i+1}"), ln=True)
         pdf.set_font("Arial", size=10)
-        if uitleg:
-            pdf.multi_cell(0, 7, clean_text(uitleg))
+        if explanation:
+            pdf.multi_cell(0, 7, clean_text(explanation))
             pdf.ln(3)
         pdf.image(plot_path, x=10, w=pdf.w - 20)
         os.remove(plot_path)
 
-    # 6. Conclusie & aanbevelingen
-    conclusie_tekst = (
-        "Hieronder volgt een samenvatting van de belangrijkste inzichten en aanbevelingen uit bovenstaande analyse en AI-rapport.\n\n"
-        "- Let vooral op de genoemde trends en verbanden.\n"
-        "- De grafieken geven visuele ondersteuning bij de trends.\n"
-        "- Overweeg om extra data te verzamelen of andere kolommen te onderzoeken voor diepgaandere analyse.\n"
-        "- Raadpleeg het AI-advies voor concrete vervolgstappen."
+    # 6. Conclusion & Recommendations
+    conclusion_text = (
+        "Below is a summary of the key findings and recommendations based on the analysis and AI insights.\n\n"
+        "- Pay attention to the highlighted trends and correlations.\n"
+        "- The charts provide visual support for these trends.\n"
+        "- Consider collecting additional data or exploring other columns for deeper insights.\n"
+        "- Refer to the AI insights for concrete next steps."
     )
     pdf.add_page()
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, clean_text("Conclusie & Aanbevelingen:"), ln=True)
+    pdf.cell(0, 10, clean_text("Conclusion & Recommendations:"), ln=True)
     pdf.set_font("Arial", size=10)
-    pdf.multi_cell(0, 7, clean_text(conclusie_tekst))
+    pdf.multi_cell(0, 7, clean_text(conclusion_text))
 
-    # Save PDF to disk (for tracking in DB)
+    # Save PDF
     pdf_filename = f"{os.path.splitext(csv_record.filename)[0]}_analysis_report.pdf"
     pdf_storage_path = os.path.join(current_app.config['UPLOAD_FOLDER'], pdf_filename)
     pdf_bytes = pdf.output(dest='S').encode('latin1')
     with open(pdf_storage_path, "wb") as f:
         f.write(pdf_bytes)
 
-    # Save to PDFReport database table (using user_sub and filepath)
+    # Record in database if not existing
     existing = PDFReport.query.filter_by(filename=pdf_filename, user_sub=csv_record.user_sub).first()
     if not existing:
         pdf_report = PDFReport(
@@ -454,13 +459,10 @@ def generate_pdf(csv_id):
         db.session.add(pdf_report)
         db.session.commit()
 
-    # Serve as download
+    # Serve the PDF for download
     return send_file(
         pdf_storage_path,
         mimetype="application/pdf",
         as_attachment=True,
         download_name=pdf_filename
     )
-
-
-
