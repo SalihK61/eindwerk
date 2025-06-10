@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import io
 import openai
 from fpdf import FPDF
+import seaborn as sns
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -285,31 +286,88 @@ def generate_ai_insight(df):
     )
     return response.choices[0].message.content
 
-def create_generic_plot(df):
+def generate_ai_insight(df):
+    # Verzamel statistieken, topwaarden en correlatie (indien mogelijk)
+    stats = df.describe(include='all').to_string()
+    columns = ', '.join(df.columns)
+    sample_rows = df.head(5).to_string(index=False)
+    correlations = ""
+    if df.select_dtypes(include='number').shape[1] >= 2:
+        correlations = df.corr(numeric_only=True).to_string()
+
+    top_cats = ""
+    for col in df.select_dtypes(include='object').columns:
+        top = df[col].value_counts().head(3)
+        top_cats += f"\nTopwaarden in '{col}':\n{top.to_string()}\n"
+
+    prompt = (
+        f"Hier is een dataset met kolommen: {columns}\n\n"
+        f"Samenvattende statistieken:\n{stats}\n\n"
+        f"De eerste 5 rijen van de data:\n{sample_rows}\n"
+        f"{top_cats}"
+        f"\nCorrelatie tussen numerieke kolommen:\n{correlations}\n\n"
+        "Maak een diepgaande analyse van deze dataset voor een professioneel rapport. "
+        "Beschrijf niet alleen de algemene kenmerken, maar ga in op opvallende cijfers, trends, correlaties, uitzonderingen en mogelijke verbanden. "
+        "Geef ook hypotheses waarom deze patronen bestaan, geef concrete voorbeelden en trek meerdere conclusies. "
+        "Sluit af met aanbevelingen of suggesties voor verder onderzoek. "
+        "De data kan over eender welk onderwerp gaan, dus analyseer zonder specifieke voorkennis."
+    )
+
+    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=700,
+    )
+    return response.choices[0].message.content
+
+def create_numeric_plot(df):
     num_cols = df.select_dtypes(include='number').columns.tolist()
-    cat_cols = df.select_dtypes(include='object').columns.tolist()
     buf = io.BytesIO()
-    plt.figure(figsize=(6, 4))
     if num_cols:
+        plt.figure(figsize=(6, 4))
         col = num_cols[0]
-        df[col].dropna().hist(bins=10)
+        df[col].dropna().hist(bins=20)
         plt.title(f"Verdeling van {col}")
         plt.xlabel(col)
         plt.ylabel("Frequentie")
-    elif cat_cols:
+        plt.tight_layout()
+        plt.savefig(buf, format="png")
+        plt.close()
+        buf.seek(0)
+        return buf, f"plot_numeric_{col}.png"
+    return None, None
+
+def create_category_plot(df):
+    cat_cols = df.select_dtypes(include='object').columns.tolist()
+    buf = io.BytesIO()
+    if cat_cols:
+        plt.figure(figsize=(6, 4))
         col = cat_cols[0]
         df[col].value_counts().head(10).plot(kind="bar")
-        plt.title(f"Top 10 meest voorkomende waarden in {col}")
+        plt.title(f"Top 10 waarden in {col}")
         plt.xlabel(col)
-        plt.ylabel("Frequentie")
-    else:
-        plt.text(0.5, 0.5, "Geen geschikte kolom voor grafiek", ha='center')
-    plt.tight_layout()
-    plt.savefig(buf, format="png")
-    plt.close()
-    buf.seek(0)
-    return buf
+        plt.ylabel("Aantal")
+        plt.tight_layout()
+        plt.savefig(buf, format="png")
+        plt.close()
+        buf.seek(0)
+        return buf, f"plot_categorical_{col}.png"
+    return None, None
 
+def create_correlation_heatmap(df):
+    num_cols = df.select_dtypes(include='number')
+    if num_cols.shape[1] >= 2:
+        plt.figure(figsize=(6, 5))
+        sns.heatmap(num_cols.corr(), annot=True, fmt=".2f", cmap="coolwarm")
+        plt.title("Correlatiematrix")
+        buf = io.BytesIO()
+        plt.tight_layout()
+        plt.savefig(buf, format="png")
+        plt.close()
+        buf.seek(0)
+        return buf, "correlation_heatmap.png"
+    return None, None
 
 @main.route('/generate_pdf/<int:csv_id>')
 def generate_pdf(csv_id):
@@ -320,11 +378,28 @@ def generate_pdf(csv_id):
     csv_record = CSVFile.query.get_or_404(csv_id)
     df = pd.read_csv(csv_record.filepath)
 
-    # 2. AI Analysis
+    # 2. AI Analysis (uitgebreid)
     ai_insight = generate_ai_insight(df)
 
-    # 3. Generic plot
-    plot_buf = create_generic_plot(df)
+    # 3. Multiple plots
+    plot_buffers = []
+    plot_files = []
+
+    # Numeric plot
+    buf, filename = create_numeric_plot(df)
+    if buf:
+        plot_buffers.append(buf)
+        plot_files.append(filename)
+    # Category plot
+    buf, filename = create_category_plot(df)
+    if buf:
+        plot_buffers.append(buf)
+        plot_files.append(filename)
+    # Correlation plot
+    buf, filename = create_correlation_heatmap(df)
+    if buf:
+        plot_buffers.append(buf)
+        plot_files.append(filename)
 
     # 4. PDF creation
     pdf = FPDF()
@@ -346,12 +421,27 @@ def generate_pdf(csv_id):
         pdf.multi_cell(0, 7, line)
     pdf.ln(5)
 
-    # Save plot to a temporary file
-    plot_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"plot_{csv_id}.png")
-    with open(plot_path, "wb") as f:
-        f.write(plot_buf.getbuffer())
-    pdf.image(plot_path, x=10, w=pdf.w - 20)
-    os.remove(plot_path)
+    # 5. Insert all plots
+    for i, (buf, fname) in enumerate(zip(plot_buffers, plot_files)):
+        plot_path = os.path.join(current_app.config['UPLOAD_FOLDER'], fname)
+        with open(plot_path, "wb") as f:
+            f.write(buf.getbuffer())
+        pdf.add_page()
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 10, f"Figuur {i+1}", ln=True)
+        pdf.image(plot_path, x=10, w=pdf.w - 20)
+        os.remove(plot_path)
+
+    # 6. (Extra) Conclusie op basis van AI-output (optioneel)
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Conclusie & Aanbevelingen:", ln=True)
+    pdf.set_font("Arial", size=10)
+    pdf.multi_cell(0, 7, "Hieronder volgt een samenvatting van de belangrijkste inzichten en aanbevelingen uit bovenstaande analyse en AI-rapport.\n\n"
+                         + "• Let vooral op de genoemde trends en verbanden.\n"
+                         + "• De grafieken geven visuele ondersteuning bij de trends.\n"
+                         + "• Overweeg om extra data te verzamelen of andere kolommen te onderzoeken voor diepgaandere analyse.\n"
+                         + "• Raadpleeg het AI-advies voor concrete vervolgstappen.")
 
     # Save PDF to disk (for tracking in DB)
     pdf_filename = f"{os.path.splitext(csv_record.filename)[0]}_analysis_report.pdf"

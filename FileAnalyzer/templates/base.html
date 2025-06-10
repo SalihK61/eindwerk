@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,8 +10,24 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- AOS Animate-On-Scroll -->
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+  <script>
+    // Configure Tailwind to include dark mode
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
+  <style>
+    /* Ensure correlation table text respects the theme */
+    .table.text-black {
+      color: inherit !important;
+    }
+    /* Smooth transition for buttons */
+    .navbar-button {
+      transition: background-color 0.3s ease;
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white pt-20">
+<body class="bg-gray-900 text-white pt-20 dark:bg-gray-900 dark:text-white transition-colors duration-300">
 
   <!-- Global Header -->
   <header class="absolute top-0 left-0 w-full z-10">
@@ -22,30 +38,43 @@
           <img
             src="{{ user.picture }}"
             alt="{{ user.name }}’s avatar"
-            class="w-10 h-10 rounded-full border-2 border-gray-700"
+            class="w-10 h-10 rounded-full border-2 border-gray-700 dark:border-gray-700"
           />
         {% else %}
           <h1 class="text-3xl font-bold">CSV Analyser</h1>
         {% endif %}
       </div>
 
-      <!-- RIGHT: Dashboard/Logout when logged in, Login otherwise -->
+      <!-- RIGHT: Dashboard/Logout when logged in, Login, and Theme Toggle -->
       <div class="flex items-center space-x-4">
         {% if user %}
           <a
             href="{{ url_for('main.dashboard') }}"
-            class="px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-500 font-medium"
+            class="px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-500 font-medium dark:bg-blue-500 dark:hover:bg-blue-400 navbar-button"
           >Dashboard</a>
           <a
             href="{{ url_for('main.logout') }}"
-            class="px-4 py-2 bg-red-600 rounded-md hover:bg-red-500 font-medium"
+            class="px-4 py-2 bg-red-600 rounded-md hover:bg-red-500 font-medium dark:bg-red-500 dark:hover:bg-red-400 navbar-button"
           >Logout</a>
         {% else %}
           <a
             href="{{ url_for('main.login') }}"
-            class="px-4 py-2 bg-green-600 rounded-md hover:bg-green-500 font-medium"
+            class="px-4 py-2 bg-green-600 rounded-md hover:bg-green-500 font-medium dark:bg-green-500 dark:hover:bg-green-400 navbar-button"
           >Login</a>
         {% endif %}
+        <!-- Theme Toggle Button -->
+        <button
+          id="theme-toggle"
+          class="px-4 py-2 bg-gray-700 rounded-md hover:bg-gray-600 font-medium flex items-center space-x-2 navbar-button"
+          aria-label="Toggle theme"
+        >
+          <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
@@ -54,6 +83,48 @@
 
   <!-- AOS JS -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-  <script> AOS.init(); </script>
+  <script>
+    AOS.init();
+
+    // Theme toggle script
+    const htmlElement = document.documentElement;
+    const themeToggle = document.getElementById('theme-toggle');
+    const sunIcon = document.getElementById('sun-icon');
+    const moonIcon = document.getElementById('moon-icon');
+
+    // Check for saved theme preference or default to dark mode
+    if (localStorage.getItem('theme') === 'light') {
+      htmlElement.classList.remove('dark');
+      document.body.classList.add('bg-white', 'text-gray-900');
+      document.body.classList.remove('bg-gray-900', 'text-white');
+      sunIcon.classList.add('hidden');
+      moonIcon.classList.remove('hidden');
+    } else {
+      htmlElement.classList.add('dark');
+      document.body.classList.add('bg-gray-900', 'text-white');
+      document.body.classList.remove('bg-white', 'text-gray-900');
+      sunIcon.classList.remove('hidden');
+      moonIcon.classList.add('hidden');
+    }
+
+    // Toggle theme on button click
+    themeToggle.addEventListener('click', () => {
+      if (htmlElement.classList.contains('dark')) {
+        htmlElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        document.body.classList.add('bg-white', 'text-gray-900');
+        document.body.classList.remove('bg-gray-900', 'text-white');
+        sunIcon.classList.add('hidden');
+        moonIcon.classList.remove('hidden');
+      } else {
+        htmlElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        document.body.classList.add('bg-gray-900', 'text-white');
+        document.body.classList.remove('bg-white', 'text-gray-900');
+        sunIcon.classList.remove('hidden');
+        moonIcon.classList.add('hidden');
+      }
+    });
+  </script>
 </body>
 </html>

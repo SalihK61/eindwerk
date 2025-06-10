@@ -12,3 +12,5 @@ numpy
 matplotlib
 openai
 fpdf
+tailwind
+seaborn
