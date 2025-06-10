@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Economic Analysis</h1>
+  {% for sheet, insight in insights.items() %}
+    <section>
+      <h2>{{ sheet }}</h2>
+      <h3>Descriptive Statistics</h3>
+      <ul>
+        {% for stat, values in insight.descriptive_stats.items() %}
+          <li><strong>{{ stat }}:</strong> {{ values }}</li>
+        {% endfor %}
+      </ul>
+      <h3>Seasonality & Trend</h3>
+      <p>{{ insight.seasonal_trend_insights }}</p>
+      <img src="data:image/png;base64,{{ figures[sheet].getvalue()|b64encode }}" alt="Decomposition for {{ sheet }}">
+    </section>
+  {% endfor %}
+{% endblock %}
