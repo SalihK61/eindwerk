@@ -2,23 +2,38 @@
 {% block title %}My CSV Uploads{% endblock %}
 {% block content %}
 <main class="p-8 bg-gray-900 min-h-screen">
-  <h2 class="text-3xl font-bold text-white mb-6">My CSV Uploads</h2>
+  <h2 class="text-3xl font-bold text-white mb-6" data-aos="fade-down">My CSV Uploads</h2>
   {% if csvs %}
+  {% set anim_types = ['fade-up-right', 'fade-up-left', 'fade-up'] %}
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for csv in csvs %}
-    <div class="bg-gray-800 hover:bg-gray-700 text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col justify-between">
-      <h3 class="text-xl font-semibold truncate">{{ csv.filename }}</h3>
+    {% set anim = anim_types[loop.index0 % anim_types|length] %}
+    <div
+      class="bg-gray-800 hover:bg-gray-700 text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col justify-between group"
+      data-aos="{{ anim }}"
+      data-aos-delay="{{ loop.index0 * 100 }}"
+      data-aos-duration="900"
+      data-aos-easing="ease-out-cubic"
+    >
+      <h3 class="text-xl font-semibold truncate mb-2 group-hover:scale-105 transition-transform duration-300">
+        {{ csv.filename }}
+      </h3>
       <div class="mt-4 flex space-x-2">
         <a href="{{ url_for('main.download_file', filename=csv.filename) }}"
-           class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-center">Download</a>
+           class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-center shadow-lg hover:scale-105 transition-all duration-300"
+           download>
+           Download
+        </a>
         <a href="{{ url_for('main.analyse_csv', csv_id=csv.id) }}"
-           class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-500 rounded text-center">Analyse</a>
+           class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-500 rounded text-center shadow-lg hover:scale-105 transition-all duration-300"
+        >Analyse</a>
       </div>
+      <div class="mt-4 h-2 w-2 rounded-full bg-blue-600 opacity-0 group-hover:opacity-80 blur-sm transition duration-300 mx-auto"></div>
     </div>
     {% endfor %}
   </div>
   {% else %}
-    <p class="text-white">No CSV files found.</p>
+    <p class="text-white" data-aos="fade-up" data-aos-delay="200">No CSV files found.</p>
   {% endif %}
 </main>
 {% endblock %}

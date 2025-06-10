@@ -19,10 +19,14 @@
         {{ pdf.filename }}
       </h3>
       <div class="mt-4 flex space-x-2">
-        <a href="{{ url_for('main.download_file', filename=pdf.filename) }}"
-           class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-center shadow-lg hover:scale-105 transition-all duration-300"
-           download>
-           Download
+        <a
+          href="{{ url_for('main.download_file', filename=pdf.filename) }}"
+          class="download-btn relative flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-center shadow-lg hover:scale-105 transition-all duration-300 overflow-hidden font-semibold"
+          download
+        >
+          <span class="relative z-10">Download</span>
+          <!-- Animated green overlay -->
+          <span class="progress absolute left-0 top-0 h-full w-0 bg-green-500 transition-all duration-300 z-0"></span>
         </a>
       </div>
       <div class="mt-4 h-2 w-2 rounded-full bg-blue-600 opacity-0 group-hover:opacity-80 blur-sm transition duration-300 mx-auto"></div>
@@ -32,27 +36,28 @@
   {% else %}
     <p class="text-white" data-aos="fade-up" data-aos-delay="200">Geen rapporten gevonden.</p>
   {% endif %}
-
-  <!-- Download overlay spinner -->
-  <div id="download-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="flex flex-col items-center">
-      <svg class="animate-spin h-12 w-12 text-white mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-      </svg>
-      <span class="text-white text-lg">Download wordt voorbereid...</span>
-    </div>
-  </div>
 </main>
 
 <script>
-  // Laat overlay/spinner zien bij elke download klik
-  document.querySelectorAll('a[download]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      const overlay = document.getElementById('download-overlay');
-      overlay.classList.remove('hidden');
-      setTimeout(() => overlay.classList.add('hidden'), 2000);
-    });
+document.querySelectorAll('.download-btn').forEach(function(btn) {
+  btn.addEventListener('click', function(e) {
+    const progress = btn.querySelector('.progress');
+    // Start animatie: groen vult de knop
+    progress.style.width = "100%";
+    progress.style.transition = "width 0.4s cubic-bezier(.7,0,.3,1)";
+    btn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
+    btn.classList.add('bg-green-500');
+    // Tekst blijft goed zichtbaar
+    btn.querySelector('span').classList.add('text-white');
+
+    // Na 2s terug naar blauw
+    setTimeout(() => {
+      progress.style.width = "0";
+      btn.classList.remove('bg-green-500');
+      btn.classList.add('bg-blue-600', 'hover:bg-blue-500');
+      btn.querySelector('span').classList.remove('text-white');
+    }, 2000);
   });
+});
 </script>
 {% endblock %}
