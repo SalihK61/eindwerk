@@ -30,8 +30,16 @@
             '0%, 100%': { borderColor: 'transparent' },
             '50%':      { borderColor: 'currentColor' },
           },
+            eccentric: {
+          '0%, 100%': { transform: 'translateY(0) rotate(0deg) scale(1) skew(0deg)' },
+          '20%':      { transform: 'translateY(-8px) rotate(15deg) scale(1.2) skew(5deg)' },
+          '40%':      { transform: 'translateY(-12px) rotate(-15deg) scale(0.8) skew(-5deg)' },
+          '60%':      { transform: 'translateY(-10px) rotate(10deg) scale(1.1) skew(3deg)' },
+          '80%':      { transform: 'translateY(-6px) rotate(-5deg) scale(1.05) skew(-2deg)' },
+        },
         },
         animation: {
+            'eccentric': 'eccentric 0.8s ease-in-out',
           // types over 2s, then blinks 4 times (0.75s each), then stays with cursor hidden
           'typing-blink': 'typing 2s steps(30,end) forwards, blink .75s step-end 4 forwards 2s',
         },
