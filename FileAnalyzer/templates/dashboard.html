@@ -12,15 +12,14 @@
 
   <!-- Action Cards Grid -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
     <!-- Upload New CSV Card -->
     <a
       href="{{ url_for('main.upload') }}"
       data-aos="fade-up"
-      class="relative block bg-gray-200 dark:bg-gray-700 rounded-2xl p-8 shadow-lg
+      class="group relative block bg-gray-200 dark:bg-gray-700 rounded-2xl p-8 shadow-lg
              hover:shadow-[0_10px_15px_-3px_rgba(59,130,246,0.5),0_4px_6px_-2px_rgba(59,130,246,0.3)]
-             transform hover:-translate-y-2
-             transition-all duration-300 ease-in-out
-             overflow-visible"
+             transform hover:-translate-y-2 transition-all duration-300 ease-in-out overflow-visible"
     >
       <div class="flex items-center mb-4">
         <!-- Heroicon: Upload -->
@@ -37,8 +36,11 @@
       </div>
       <p class="text-gray-600 dark:text-gray-400">Get started by uploading a new file.</p>
       <!-- Decorative Watermark SVG -->
-      <svg class="absolute bottom-4 right-4 w-20 h-20 text-gray-900 dark:text-white opacity-10 transform rotate-45"
-           fill="currentColor" viewBox="0 0 24 24">
+      <svg
+        class="absolute bottom-4 right-4 w-20 h-20 text-gray-900 dark:text-white opacity-10 rotate-45
+               transform group-hover:animate-eccentric"
+        fill="currentColor" viewBox="0 0 24 24"
+      >
         <path d="M3 3h18v18H3z"/>
       </svg>
     </a>
@@ -47,11 +49,9 @@
     <a
       href="{{ url_for('main.mycsvs') }}"
       data-aos="fade-up" data-aos-delay="100"
-      class="relative block bg-gray-200 dark:bg-gray-700 rounded-2xl p-8 shadow-lg
+      class="group relative block bg-gray-200 dark:bg-gray-700 rounded-2xl p-8 shadow-lg
              hover:shadow-[0_10px_15px_-3px_rgba(34,197,94,0.5),0_4px_6px_-2px_rgba(34,197,94,0.3)]
-             transform hover:-translate-y-2
-             transition-all duration-300 ease-in-out
-             overflow-visible"
+             transform hover:-translate-y-2 transition-all duration-300 ease-in-out overflow-visible"
     >
       <div class="flex items-center mb-4">
         <!-- Heroicon: Folder -->
@@ -67,8 +67,11 @@
       <p class="text-gray-600 dark:text-gray-400">
         Browse your previously uploaded CSV files.
       </p>
-      <svg class="absolute bottom-4 right-4 w-20 h-20 text-gray-900 dark:text-white opacity-10 transform -rotate-45"
-           fill="currentColor" viewBox="0 0 24 24">
+      <svg
+        class="absolute bottom-4 right-4 w-20 h-20 text-gray-900 dark:text-white opacity-10 -rotate-45
+               transform group-hover:animate-eccentric"
+        fill="currentColor" viewBox="0 0 24 24"
+      >
         <circle cx="12" cy="12" r="10"/>
       </svg>
     </a>
@@ -77,11 +80,9 @@
     <a
       href="{{ url_for('main.reports') }}"
       data-aos="fade-up" data-aos-delay="200"
-      class="relative block bg-gray-200 dark:bg-gray-700 rounded-2xl p-8 shadow-lg
+      class="group relative block bg-gray-200 dark:bg-gray-700 rounded-2xl p-8 shadow-lg
              hover:shadow-[0_10px_15px_-3px_rgba(168,85,247,0.5),0_4px_6px_-2px_rgba(168,85,247,0.3)]
-             transform hover:-translate-y-2
-             transition-all duration-300 ease-in-out
-             overflow-visible"
+             transform hover:-translate-y-2 transition-all duration-300 ease-in-out overflow-visible"
     >
       <div class="flex items-center mb-4">
         <!-- Heroicon: Document Report -->
@@ -97,11 +98,15 @@
       <p class="text-gray-600 dark:text-gray-400">
         View all your generated PDF analyses.
       </p>
-      <svg class="absolute bottom-4 right-4 w-20 h-20 text-gray-900 dark:text-gray-400 opacity-10 transform rotate-12"
-           fill="currentColor" viewBox="0 0 24 24">
+      <svg
+        class="absolute bottom-4 right-4 w-20 h-20 text-gray-900 dark:text-gray-400 opacity-10 rotate-12
+               transform group-hover:animate-eccentric"
+        fill="currentColor" viewBox="0 0 24 24"
+      >
         <polygon points="12,2 22,22 2,22"/>
       </svg>
     </a>
+
   </div>
 </main>
 {% endblock %}
