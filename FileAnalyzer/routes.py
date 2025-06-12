@@ -1,17 +1,11 @@
 import os
 import io
-
-from flask import (
-    Blueprint, render_template, session, redirect, url_for,
-    current_app, request, flash, send_file
-)
+from flask import Blueprint, render_template, session, redirect, url_for,current_app, request, flash, send_file
 from authlib.integrations.flask_client import OAuthError
 from werkzeug.utils import secure_filename
-
 import pandas as pd
 import numpy as np
 from fpdf import FPDF
-
 from models import db, User, CSVFile, PDFReport
 from utils.text import allowed_file, clean_text
 from utils.stats import compute_basic_stats, make_corr_html
