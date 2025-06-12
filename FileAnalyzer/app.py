@@ -38,7 +38,6 @@ def create_app():
 
     # Create database tables (and upload/report folders)
     with app.app_context():
-        db.create_all()
         os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
         os.makedirs(app.config.get('REPORT_FOLDER', 'reports'), exist_ok=True)
 
@@ -46,11 +45,9 @@ def create_app():
 
 app = create_app()
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Or your PostgreSQL URI
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 
 with app.app_context():
-    db.create_all()
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
 
