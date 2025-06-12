@@ -38,8 +38,8 @@ def create_app():
 
     # Create database tables (and upload/report folders)
     with app.app_context():
-        os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
-        os.makedirs(app.config.get('REPORT_FOLDER', 'reports'), exist_ok=True)
+        os.makedirs(app.config.get('UPLOAD_FOLDER', '/uploads'), exist_ok=True)
+        os.makedirs(app.config.get('REPORT_FOLDER', '/reports'), exist_ok=True)
 
     return app
 
