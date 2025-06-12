@@ -45,7 +45,7 @@ def create_app():
 
 app = create_app()
 
-if app.config['ENV'] != 'development':
+if app.config['FLASK_ENV'] != 'development':
     with app.app_context():
         from models import db
         db.create_all()
