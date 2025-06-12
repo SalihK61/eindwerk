@@ -9,15 +9,7 @@ A Dockerized Flask web application that lets authenticated users upload CSV file
 - [Features](#features)  
 - [Tech Stack](#tech-stack)  
 - [Prerequisites](#prerequisites)  
-- [Configuration](#configuration)  
-- [Installation & Running](#installation--running)  
-  - [1. Clone & Environment](#1-clone--environment)  
-  - [2. Build & Run with Docker Compose](#2-build--run-with-docker-compose)  
-  - [3. Direct Docker Build & Run](#3-direct-docker-build--run)  
-- [Usage](#usage)  
-- [Project Structure](#project-structure)  
-- [Contributing](#contributing)  
-- [License](#license)  
+- [Configuration](#configuration)   
 
 ---
 
