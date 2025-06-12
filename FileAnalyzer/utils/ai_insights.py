@@ -27,7 +27,7 @@ def build_insight_prompt(df):
             f"\nTop values in '{col}':\n"
             f"{top.to_string()}\n"
         )
-
+    #we need to use a very general question becauese of the veriaty of the files that can be uploaded
     return (
         f"Here is a dataset with columns: {columns}\n\n"
         f"Summary statistics:\n{stats}\n\n"
@@ -58,5 +58,4 @@ def generate_ai_insight(df):
             warnings.warn(f"OpenAI API error on attempt {attempt}: {e}")
             if attempt == MAX_RETRIES:
                 return "AI insights currently unavailable due to an error."
-            # small backoff could be added here
             continue
