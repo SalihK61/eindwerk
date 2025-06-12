@@ -1,28 +1,28 @@
 import os
-from flask import Flask, session, redirect, url_for
+from flask import Flask, session, redirect, url_for, send_from_directory
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
+
 from config import Config
 from models import db, User
 from routes import main
-from flask_login import current_user
-from flask import current_app
-from flask import send_from_directory
 
+# Load environment variables from .env file for configuration values
 load_dotenv()
 
-
 def create_app():
+    """
+    Application factory: creates and configures the Flask app.
+    """
+    # Instantiate Flask application, serving static files from 'static'
     app = Flask(__name__, static_folder='static')
+    # Load configuration settings from Config class
     app.config.from_object(Config)
 
-    # Optional: force new secret key on restart in dev (logs out all users)
-    # app.secret_key = os.urandom(24)
-
-    # Initialize database
+    # Initialize SQLAlchemy with the app
     db.init_app(app)
 
-    # Auth0 setup
+    # Set up Auth0 OAuth client
     oauth = OAuth(app)
     auth0 = oauth.register(
         'auth0',
@@ -31,59 +31,75 @@ def create_app():
         client_kwargs={'scope': 'openid profile email'},
         server_metadata_url=f"https://{app.config['AUTH0_DOMAIN']}/.well-known/openid-configuration"
     )
+    # Attach auth0 client to app for use in routes
     app.auth0 = auth0
 
-    # Register routes
+    # Register blueprint(s) for main application routes
     app.register_blueprint(main)
 
-    # Create database tables (and upload/report folders)
+    # Within application context, ensure database tables and folders exist
     with app.app_context():
+        # Create any missing database tables
         db.create_all()
+        # Ensure upload and report directories exist
         os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
         os.makedirs(app.config.get('REPORT_FOLDER', 'reports'), exist_ok=True)
 
     return app
 
+# Create and configure the Flask app instance
 app = create_app()
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Or your PostgreSQL URI
+# Additional configuration overrides (database URI, disable event system overhead)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Or set your PostgreSQL URI here
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# After overrides, ensure tables and upload folder exist
 with app.app_context():
     db.create_all()
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
+    os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
 
 @app.context_processor
 def inject_user():
-    # Pull the Auth0 profile you stored in session['user']
+    """
+    Make the authenticated user profile available in all Jinja2 templates
+    via the variable 'user'.
+    """
     return {"user": session.get("user")}
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    from config import UPLOAD_FOLDER
-    return send_from_directory(UPLOAD_FOLDER, filename)
+    """
+    Serve files from the upload directory.
+    """
+    folder = app.config.get('UPLOAD_FOLDER', 'uploads')
+    return send_from_directory(folder, filename)
 
-# --- ADDED: Ensure user still exists in DB for every request ---
 @app.before_request
 def ensure_user_still_exists():
-    user = session.get("user")
-    if user:
-        # Check if user is still in your DB (by email)
+    """
+    Before every request, confirm the user in session still exists in the DB.
+    If the user record was removed, clear session and redirect to login.
+    """
+    user_info = session.get("user")
+    if user_info:
         user_in_db = db.session.execute(
-            db.select(User).filter_by(email=user.get("email"))
+            db.select(User).filter_by(email=user_info.get("email"))
         ).scalar_one_or_none()
         if not user_in_db:
             session.clear()
-            return redirect(url_for("main.login"))  # Update if your login route differs
+            return redirect(url_for("main.login"))
 
-# --- ADDED: Example logout route ---
 @app.route('/logout')
 def logout():
+    """
+    Clear the user session and redirect to the login page.
+    """
     session.clear()
-    return redirect(url_for("main.login"))  # Update if your login route differs
+    return redirect(url_for("main.login"))
 
 if __name__ == '__main__':
+    # Run the Flask development server on port 4000
     app.run(
         host='0.0.0.0',
         port=4000,
