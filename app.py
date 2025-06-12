@@ -45,6 +45,10 @@ def create_app():
 
 app = create_app()
 
+if app.config['ENV'] != 'development':
+    with app.app_context():
+        from models import db
+        db.create_all()
 
 
 with app.app_context():
