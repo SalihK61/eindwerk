@@ -1,6 +1,6 @@
 FROM python:3.11-slim as builder
 WORKDIR /app
-COPY requirements.txt .
+COPY ./FileAnalyzer/requirements.txt .
 RUN pip install --user -r requirements.txt
 
 FROM python:3.11-slim
