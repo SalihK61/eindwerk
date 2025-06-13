@@ -202,7 +202,9 @@ def generate_pdf(csv_id):
     csv_record = CSVFile.query.get_or_404(csv_id)
     df = pd.read_csv(csv_record.filepath)
 
-    ai_insight = generate_ai_insight(df)
+    # get optional prompt if it is given by the uaser
+    user_prompt = request.args.get("prompt", "").strip()
+    ai_insight = generate_ai_insight(df, user_prompt)
 
     plot_funcs = [create_numeric_plot, create_category_plot, create_correlation_heatmap]
     plot_infos = [(buf, fname, exp) for func in plot_funcs for buf, fname, exp in [func(df)] if buf]

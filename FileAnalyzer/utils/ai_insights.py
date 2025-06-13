@@ -41,16 +41,25 @@ def build_insight_prompt(df):
     )
 
 
-def generate_ai_insight(df):
+def generate_ai_insight(df, user_prompt=""):
     """
-    Generate a detailed AI-powered data analysis report with retries.
+    Generate a detailed AI-powered data analysis report with optional user focus.
     """
-    prompt = build_insight_prompt(df)
+    base_prompt = build_insight_prompt(df)
+
+    if user_prompt.strip():
+        full_prompt = (
+            f"{base_prompt}\n\n"
+            f"Please focus especially on the following aspect as requested by the user:\n{user_prompt.strip()}"
+        )
+    else:
+        full_prompt = base_prompt
+
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             resp = openai.chat.completions.create(
                 model=MODEL,
-                messages=[{"role": "user", "content": prompt}],
+                messages=[{"role": "user", "content": full_prompt}],
                 max_tokens=1500
             )
             return resp.choices[0].message.content
