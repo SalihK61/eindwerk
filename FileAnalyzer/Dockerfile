@@ -7,7 +7,7 @@ FROM python:3.11-slim
 WORKDIR /app
 COPY --from=builder /root/.local /root/.local
 ENV PATH=/root/.local/bin:$PATH
-COPY . .
+COPY .. .
 # tell Render which port your app listens on
 ENV PORT=4000
 EXPOSE 4000

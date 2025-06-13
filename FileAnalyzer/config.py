@@ -1,10 +1,11 @@
 import os
+import tempfile
 from dotenv import load_dotenv
 
 load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+UPLOAD_FOLDER = os.environ.get(tempfile.gettempdir(), "uploads")
 
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key'
