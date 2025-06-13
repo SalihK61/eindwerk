@@ -14,3 +14,4 @@ openai
 fpdf
 tailwind
 seaborn
+statsmodels

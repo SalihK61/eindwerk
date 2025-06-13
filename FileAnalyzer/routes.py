@@ -1,6 +1,6 @@
 import os
 import io
-from flask import Blueprint, render_template, session, redirect, url_for,current_app, request, flash, send_file
+from flask import Blueprint, render_template, session, redirect, url_for, current_app, request, flash, send_file
 from authlib.integrations.flask_client import OAuthError
 from werkzeug.utils import secure_filename
 import pandas as pd
@@ -15,6 +15,7 @@ from utils.ai_insights import generate_ai_insight
 # Initialize Blueprint
 main = Blueprint('main', __name__)
 
+
 # ----------------------
 # Authentication Routes
 # ----------------------
@@ -22,11 +23,13 @@ main = Blueprint('main', __name__)
 def home():
     return render_template('home.html', user=session.get('user'))
 
+
 @main.route('/login')
 def login():
     return current_app.auth0.authorize_redirect(
         redirect_uri=current_app.config['AUTH0_CALLBACK_URL']
     )
+
 
 @main.route('/register')
 def register():
@@ -34,6 +37,7 @@ def register():
         redirect_uri=current_app.config['AUTH0_CALLBACK_URL'],
         screen_hint='signup'
     )
+
 
 @main.route('/callback')
 def callback():
@@ -67,6 +71,7 @@ def callback():
 
     return redirect(url_for('main.dashboard'))
 
+
 @main.route('/logout')
 def logout():
     session.clear()
@@ -75,6 +80,7 @@ def logout():
         f"?returnTo={url_for('main.home', _external=True)}"
         f"&client_id={current_app.config['AUTH0_CLIENT_ID']}"
     )
+
 
 # ----------------------
 # Dashboard & Reports
@@ -85,12 +91,14 @@ def dashboard():
         return redirect(url_for('main.login'))
     return render_template('dashboard.html', user=session['user'])
 
+
 @main.route('/reports')
 def reports():
     if 'user' not in session:
         return redirect(url_for('main.login'))
     pdfs = PDFReport.query.filter_by(user_sub=session['user']['sub']).all()
     return render_template('reports.html', reports=pdfs)
+
 
 # ----------------------
 # CSV Upload & Analysis
@@ -152,12 +160,67 @@ def upload():
 
     return render_template('upload.html')
 
+
+@main.route('/delete_csv/<int:csv_id>', methods=['POST'])
+def delete_csv(csv_id):
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+
+    record = CSVFile.query.get_or_404(csv_id)
+    if record.user_sub != session['user']['sub']:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('main.mycsvs'))
+
+    try:
+        # Verwijder fysiek bestand
+        if os.path.exists(record.filepath):
+            os.remove(record.filepath)
+        # Verwijder gerelateerde PDF als die bestaat
+        pdf_report = PDFReport.query.filter_by(user_sub=record.user_sub,
+                                               filename=f"{os.path.splitext(record.filename)[0]}_analysis_report.pdf").first()
+        if pdf_report and os.path.exists(pdf_report.filepath):
+            os.remove(pdf_report.filepath)
+            db.session.delete(pdf_report)
+
+        db.session.delete(record)
+        db.session.commit()
+        flash("CSV file deleted successfully.", "success")
+    except Exception as e:
+        flash(f"Error deleting file: {e}", "danger")
+
+    return redirect(url_for('main.mycsvs'))
+
+
+@main.route('/delete_pdf/<int:pdf_id>', methods=['POST'])
+def delete_pdf(pdf_id):
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+
+    report = PDFReport.query.get_or_404(pdf_id)
+    if report.user_sub != session['user']['sub']:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('main.reports'))
+
+    try:
+        if os.path.exists(report.filepath):
+            os.remove(report.filepath)
+
+        db.session.delete(report)
+        db.session.commit()
+        flash("PDF report deleted successfully.", "success")
+    except Exception as e:
+        flash(f"Error deleting PDF: {e}", "danger")
+
+    return redirect(url_for('main.reports'))
+
+
 @main.route('/mycsvs')
 def mycsvs():
     if 'user' not in session:
         return redirect(url_for('main.login'))
     csvs = CSVFile.query.filter_by(user_sub=session['user']['sub']).all()
     return render_template('csvs.html', csvs=csvs)
+
 
 @main.route('/analyse/<int:csv_id>')
 def analyse_csv(csv_id):
@@ -180,7 +243,6 @@ def analyse_csv(csv_id):
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     hist_paths = save_histograms(df, record.id, numeric_cols)
 
-    ai_insight = generate_ai_insight(df)
     return render_template(
         'analysis.html', filename=record.filename, dtypes=dtypes,
         basic_stats=basic_stats, corr=corr_html,
@@ -190,12 +252,14 @@ def analyse_csv(csv_id):
         numeric_cols=numeric_cols, hist_paths=hist_paths, csv_file=record
     )
 
+
 @main.route('/download/<path:filename>')
 def download_file(filename):
     file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     mimetype = 'application/pdf' if filename.lower().endswith('.pdf') else 'text/csv'
     file_bytes = open(file_path, 'rb').read()
     return send_file(io.BytesIO(file_bytes), mimetype=mimetype, download_name=filename, as_attachment=True)
+
 
 @main.route('/generate_pdf/<int:csv_id>')
 def generate_pdf(csv_id):
@@ -204,7 +268,9 @@ def generate_pdf(csv_id):
     csv_path = os.path.join(current_app.config['UPLOAD_FOLDER'], csv_record.filename)
     df = pd.read_csv(csv_path)
 
-    ai_insight = generate_ai_insight(df)
+    # get optional prompt if it is given by the uaser
+    user_prompt = request.args.get("prompt", "").strip()
+    ai_insight = generate_ai_insight(df, user_prompt)
 
     plot_funcs = [create_numeric_plot, create_category_plot, create_correlation_heatmap]
     plot_infos = [(buf, fname, exp) for func in plot_funcs for buf, fname, exp in [func(df)] if buf]
@@ -227,7 +293,7 @@ def generate_pdf(csv_id):
             f.write(buf.getbuffer())
         pdf.add_page()
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, clean_text(f"Figure {i+1}"), ln=True)
+        pdf.cell(0, 10, clean_text(f"Figure {i + 1}"), ln=True)
         pdf.set_font("Arial", size=10)
         if explanation:
             pdf.multi_cell(0, 7, clean_text(explanation))
