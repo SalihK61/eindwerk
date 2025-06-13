@@ -200,7 +200,9 @@ def download_file(filename):
 @main.route('/generate_pdf/<int:csv_id>')
 def generate_pdf(csv_id):
     csv_record = CSVFile.query.get_or_404(csv_id)
-    df = pd.read_csv(csv_record.filepath)
+    import os
+    csv_path = os.path.join(current_app.config['UPLOAD_FOLDER'], csv_record.filename)
+    df = pd.read_csv(csv_path)
 
     ai_insight = generate_ai_insight(df)
 
