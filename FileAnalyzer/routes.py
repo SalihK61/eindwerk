@@ -180,7 +180,7 @@ def analyse_csv(csv_id):
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     hist_paths = save_histograms(df, record.id, numeric_cols)
 
-    ai_insight = generate_ai_insight(df)
+
     return render_template(
         'analysis.html', filename=record.filename, dtypes=dtypes,
         basic_stats=basic_stats, corr=corr_html,
