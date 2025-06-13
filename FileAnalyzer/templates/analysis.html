@@ -2,161 +2,249 @@
 {% block title %}Analysis - {{ filename }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6 space-y-12 animate-fadeIn bg-gray-100 dark:bg-gray-900">
-  <!-- 1. Analyse CSV Documents -->
-  <section>
-    <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">1. Analyse CSV Document</h2>
-    <div class="overflow-x-auto bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col space-y-4">
-      <h3 class="text-xl font-medium mb-2 text-gray-900 dark:text-white">Detected Data Types</h3>
-      <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
-        <thead class="bg-gray-100 dark:bg-gray-800">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-900 dark:text-white">Column</th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-900 dark:text-white">Data Type</th>
-          </tr>
-        </thead>
-        <tbody class="bg-gray-50 dark:bg-gray-700 divide-y divide-gray-300 dark:divide-gray-600">
-          {% for col, dtype in dtypes.items() %}
-          <tr>
-            <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{{ col }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{{ dtype }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <h3 class="text-xl font-medium mb-2 text-gray-900 dark:text-white">Basic Statistics</h3>
-      <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
-        <thead class="bg-gray-100 dark:bg-gray-800">
-          <tr>
-            <th class="px-6 py-3 text-gray-900 dark:text-white">Column</th>
-            <th class="px-6 py-3 text-gray-900 dark:text-white">Mean</th>
-            <th class="px-6 py-3 text-gray-900 dark:text-white">Median</th>
-            <th class="px-6 py-3 text-gray-900 dark:text-white">Mode</th>
-            <th class="px-6 py-3 text-gray-900 dark:text-white">Missing Values</th>
-          </tr>
-        </thead>
-        <tbody class="bg-gray-50 dark:bg-gray-700 divide-y divide-gray-300 dark:divide-gray-600">
-          {% for stat in basic_stats %}
-          <tr>
-            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.column }}</td>
-            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.mean }}</td>
-            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.median }}</td>
-            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.mode }}</td>
-            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.missing }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
+    <div class="container mx-auto px-4 py-6 space-y-12 animate-fadeIn bg-gray-100 dark:bg-gray-900">
+        <!-- 1. Analyse CSV Documents -->
+        <section>
+            <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">1. Analyse CSV Document</h2>
+            <div class="overflow-x-auto bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col space-y-4">
+                <h3 class="text-xl font-medium mb-2 text-gray-900 dark:text-white">Detected Data Types</h3>
+                <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
+                    <thead class="bg-gray-100 dark:bg-gray-800">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-900 dark:text-white">
+                            Column
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-900 dark:text-white">
+                            Data Type
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-gray-50 dark:bg-gray-700 divide-y divide-gray-300 dark:divide-gray-600">
+                    {% for col, dtype in dtypes.items() %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{{ col }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{{ dtype }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <h3 class="text-xl font-medium mb-2 text-gray-900 dark:text-white">Basic Statistics</h3>
+                <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
+                    <thead class="bg-gray-100 dark:bg-gray-800">
+                    <tr>
+                        <th class="px-6 py-3 text-gray-900 dark:text-white">Column</th>
+                        <th class="px-6 py-3 text-gray-900 dark:text-white">Mean</th>
+                        <th class="px-6 py-3 text-gray-900 dark:text-white">Median</th>
+                        <th class="px-6 py-3 text-gray-900 dark:text-white">Mode</th>
+                        <th class="px-6 py-3 text-gray-900 dark:text-white">Missing Values</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-gray-50 dark:bg-gray-700 divide-y divide-gray-300 dark:divide-gray-600">
+                    {% for stat in basic_stats %}
+                        <tr>
+                            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.column }}</td>
+                            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.mean }}</td>
+                            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.median }}</td>
+                            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.mode }}</td>
+                            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.missing }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-  <!-- 2. Remove Duplicates -->
-  <section>
-    <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">2. Remove Duplicates</h2>
-    <div class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col space-y-4">
-      <p><strong class="text-gray-900 dark:text-white">Total rows:</strong> {{ total_rows }}</p>
-      <p><strong class="text-gray-900 dark:text-white">Duplicate rows detected:</strong> {{ dup_count }}</p>
-      <a href="{{ url_for('main.download_file', filename=cleaned_filename) }}"
-         class="inline-block mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-500 dark:bg-indigo-700 dark:hover:bg-indigo-600">Download Cleaned CSV</a>
-    </div>
-  </section>
+        <!-- 2. Remove Duplicates -->
+        <section>
+            <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">2. Remove Duplicates</h2>
+            <div class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col space-y-4">
+                <p><strong class="text-gray-900 dark:text-white">Total rows:</strong> {{ total_rows }}</p>
+                <p><strong class="text-gray-900 dark:text-white">Duplicate rows detected:</strong> {{ dup_count }}</p>
+                <a href="{{ url_for('main.download_file', filename=cleaned_filename) }}"
+                   class="inline-block mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-500 dark:bg-indigo-700 dark:hover:bg-indigo-600">Download
+                    Cleaned CSV</a>
+            </div>
+        </section>
 
-  <!-- 3. Detect Missing Data -->
-  <section>
-    <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">3. Detect Missing Data</h2>
-    <div class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col space-y-4">
-      <h3 class="font-medium mb-2 text-gray-900 dark:text-white">Missing per Column</h3>
-      <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
-        <thead class="bg-gray-100 dark:bg-gray-800">
-          <tr><th class="px-6 py-3 text-gray-900 dark:text-white">Column</th><th class="px-6 py-3 text-gray-900 dark:text-white">Missing Count</th></tr>
-        </thead>
-        <tbody class="bg-gray-50 dark:bg-gray-700 divide-y divide-gray-300 dark:divide-gray-600">
-          {% for col, miss in missing_stats.items() %}
-          <tr><td class="px-6 py-4 text-gray-900 dark:text-white">{{ col }}</td><td class="px-6 py-4 text-gray-900 dark:text-white">{{ miss }}</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <p><strong class="text-gray-900 dark:text-white">Rows with any missing:</strong> {{ missing_rows_count }}</p>
-      <a href="{{ url_for('main.download_file', filename=missing_filename) }}"
-         class="inline-block mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-500 dark:bg-indigo-700 dark:hover:bg-indigo-600">Download Rows with Missing</a>
-    </div>
-  </section>
+        <!-- 3. Detect Missing Data -->
+        <section>
+            <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">3. Detect Missing Data</h2>
+            <div class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col space-y-4">
+                <h3 class="font-medium mb-2 text-gray-900 dark:text-white">Missing per Column</h3>
+                <table class="min-w-full divide-y divide-gray-300 dark:divide-gray-600">
+                    <thead class="bg-gray-100 dark:bg-gray-800">
+                    <tr>
+                        <th class="px-6 py-3 text-gray-900 dark:text-white">Column</th>
+                        <th class="px-6 py-3 text-gray-900 dark:text-white">Missing Count</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-gray-50 dark:bg-gray-700 divide-y divide-gray-300 dark:divide-gray-600">
+                    {% for col, miss in missing_stats.items() %}
+                        <tr>
+                            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ col }}</td>
+                            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ miss }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <p><strong class="text-gray-900 dark:text-white">Rows with any
+                    missing:</strong> {{ missing_rows_count }}</p>
+                <a href="{{ url_for('main.download_file', filename=missing_filename) }}"
+                   class="inline-block mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-500 dark:bg-indigo-700 dark:hover:bg-indigo-600">Download
+                    Rows with Missing</a>
+            </div>
+        </section>
 
-  <!-- 4. Generate PDF Reports -->
-  <section>
-    <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">4. Generate PDF Report</h2>
-    <div class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col space-y-4">
-      <a href="{{ url_for('main.generate_pdf', csv_id=csv_file.id) }}" class="inline-block px-6 py-3 bg-green-600 text-white rounded hover:bg-green-500 dark:bg-green-700 dark:hover:bg-green-600">Download PDF Report</a>
+        <!-- 4. Generate PDF Reports -->
+        <section>
+            <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">4. Generate PDF Report</h2>
+            <form method="GET" action="{{ url_for('main.generate_pdf', csv_id=csv_file.id) }}"
+                  class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg p-6 transition-shadow shadow-md hover:shadow-lg flex flex-col space-y-4">
+
+                <label for="prompt" class="text-lg font-medium">AI Prompt (optioneel):</label>
+                <textarea id="prompt" name="prompt" rows="3"
+                          placeholder="Schrijf hier wat je wil dat de AI bekijkt (bv. 'Focus op leeftijdsverdeling en overlevingskans')"
+                          class="w-full p-3 rounded-md bg-white text-black dark:bg-gray-900 dark:text-white resize-y"></textarea>
+
+                <button type="submit"
+                        class="inline-block px-6 py-3 bg-green-600 text-white rounded hover:bg-green-500 dark:bg-green-700 dark:hover:bg-green-600">
+                    Download PDF Report
+                </button>
+            </form>
+        </section>
+
     </div>
-  </section>
-</div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-  // Debug dumps
-  console.log('categoricalData =', {{ cat_data|tojson }});
-  console.log('timeData       =', {{ time_data|tojson }});
-  console.log('pieData        =', {{ pie_data|tojson }});
-  console.log('numericCols    =', {{ numeric_cols|tojson }});
+    <script>
+        // Debug dumps
+        console.log('categoricalData =', {{ cat_data|tojson }});
+        console.log('timeData       =', {{ time_data|tojson }});
+        console.log('pieData        =', {{ pie_data|tojson }});
+        console.log('numericCols    =', {{ numeric_cols|tojson }});
 
-  const categoricalData = {{ cat_data|tojson }};
-  const timeData = {{ time_data|tojson }};
-  const pieData = {{ pie_data|tojson }};
-  const numericCols = {{ numeric_cols|tojson }};
+        const categoricalData = {{ cat_data|tojson }};
+        const timeData = {{ time_data|tojson }};
+        const pieData = {{ pie_data|tojson }};
+        const numericCols = {{ numeric_cols|tojson }};
 
-  const barSelect = document.getElementById('bar-column');
-  const lineSelect = document.getElementById('line-column');
-  const pieSelect = document.getElementById('pie-column');
-  const numSelect = document.getElementById('numeric-column');
+        const barSelect = document.getElementById('bar-column');
+        const lineSelect = document.getElementById('line-column');
+        const pieSelect = document.getElementById('pie-column');
+        const numSelect = document.getElementById('numeric-column');
 
-  let barChart, lineChart, pieChart, numChart;
+        let barChart, lineChart, pieChart, numChart;
 
-  const colors = [
-    'rgba(75, 192, 192, 0.6)',
-    'rgba(255, 99, 132, 0.6)',
-    'rgba(54, 162, 235, 0.6)',
-    'rgba(255, 206, 86, 0.6)',
-    'rgba(153, 102, 255, 0.6)',
-  ];
-  const borderColors = colors.map(c => c.replace('0.6', '1'));
+        const colors = [
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+            'rgba(153, 102, 255, 0.6)',
+        ];
+        const borderColors = colors.map(c => c.replace('0.6', '1'));
 
-  function renderBarChart(column) {
-    if (!column||!categoricalData[column]) return;
-    const ctx = document.getElementById('barChart').getContext('2d');
-    const data = categoricalData[column];
-    const labels = Object.keys(data);
-    const values = Object.values(data);
-    if (barChart) barChart.destroy();
-    barChart = new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:column,data:values,backgroundColor:colors,borderColor:borderColors,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}},plugins:{legend:{display:true},title:{display:true,text:`Bar Chart of ${column}`}}}});
-  }
+        function renderBarChart(column) {
+            if (!column || !categoricalData[column]) return;
+            const ctx = document.getElementById('barChart').getContext('2d');
+            const data = categoricalData[column];
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+            if (barChart) barChart.destroy();
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: column,
+                        data: values,
+                        backgroundColor: colors,
+                        borderColor: borderColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {y: {beginAtZero: true}},
+                    plugins: {legend: {display: true}, title: {display: true, text: `Bar Chart of ${column}`}}
+                }
+            });
+        }
 
-  function renderLineChart(column) {
-    if (!column||!timeData[column]) return;
-    const ctx = document.getElementById('lineChart').getContext('2d');
-    const {dates,values} = timeData[column];
-    if(lineChart) lineChart.destroy();
-    lineChart=new Chart(ctx,{type:'line',data:{labels:dates,datasets:[{label:column,data:values,borderColor:colors[2],backgroundColor:colors[2].replace('0.6','0.2'),fill:false,tension:0.1}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true},x:{title:{display:true,text:'Date'}}},plugins:{legend:{display:true},title:{display:true,text:`Time Series of ${column}`}}}});
-  }
+        function renderLineChart(column) {
+            if (!column || !timeData[column]) return;
+            const ctx = document.getElementById('lineChart').getContext('2d');
+            const {dates, values} = timeData[column];
+            if (lineChart) lineChart.destroy();
+            lineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: column,
+                        data: values,
+                        borderColor: colors[2],
+                        backgroundColor: colors[2].replace('0.6', '0.2'),
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {y: {beginAtZero: true}, x: {title: {display: true, text: 'Date'}}},
+                    plugins: {legend: {display: true}, title: {display: true, text: `Time Series of ${column}`}}
+                }
+            });
+        }
 
-  function renderPieChart(column) {
-    if (!column||!pieData[column]) return;
-    const ctx = document.getElementById('pieChart').getContext('2d');
-    const data=pieData[column];const labels=Object.keys(data);const values=Object.values(data);
-    if(pieChart) pieChart.destroy();
-    pieChart=new Chart(ctx,{type:'pie',data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:borderColors,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'},title:{display:true,text:`Proportions of ${column}`}}}});
-  }
+        function renderPieChart(column) {
+            if (!column || !pieData[column]) return;
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            const data = pieData[column];
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+            if (pieChart) pieChart.destroy();
+            pieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels,
+                    datasets: [{data: values, backgroundColor: colors, borderColor: borderColors, borderWidth: 1}]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {legend: {position: 'right'}, title: {display: true, text: `Proportions of ${column}`}}
+                }
+            });
+        }
 
-  function renderNumericChart(column) {
-    if(!column)return;
-    // Numeric histogram not implemented - consider Chart.js histogram plugin or server-side bins
-  }
+        function renderNumericChart(column) {
+            if (!column) return;
+            // Numeric histogram not implemented - consider Chart.js histogram plugin or server-side bins
+        }
 
-  if(barSelect.options.length>1){barSelect.value=barSelect.options[1].value;renderBarChart(barSelect.value);}  if(lineSelect.options.length>1){lineSelect.value=lineSelect.options[1].value;renderLineChart(lineSelect.value);}  if(pieSelect.options.length>1){pieSelect.value=pieSelect.options[1].value;renderPieChart(pieSelect.value);}  if(numSelect.options.length>1){numSelect.value=numSelect.options[1].value;}
+        if (barSelect.options.length > 1) {
+            barSelect.value = barSelect.options[1].value;
+            renderBarChart(barSelect.value);
+        }
+        if (lineSelect.options.length > 1) {
+            lineSelect.value = lineSelect.options[1].value;
+            renderLineChart(lineSelect.value);
+        }
+        if (pieSelect.options.length > 1) {
+            pieSelect.value = pieSelect.options[1].value;
+            renderPieChart(pieSelect.value);
+        }
+        if (numSelect.options.length > 1) {
+            numSelect.value = numSelect.options[1].value;
+        }
 
-  barSelect.addEventListener('change',()=>renderBarChart(barSelect.value));
-  lineSelect.addEventListener('change',()=>renderLineChart(lineSelect.value));
-  pieSelect.addEventListener('change',()=>renderPieChart(pieSelect.value));
-  numSelect.addEventListener('change',()=>renderNumericChart(numSelect.value));
-</script>
+        barSelect.addEventListener('change', () => renderBarChart(barSelect.value));
+        lineSelect.addEventListener('change', () => renderLineChart(lineSelect.value));
+        pieSelect.addEventListener('change', () => renderPieChart(pieSelect.value));
+        numSelect.addEventListener('change', () => renderNumericChart(numSelect.value));
+    </script>
 {% endblock %}
