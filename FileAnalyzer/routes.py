@@ -152,6 +152,36 @@ def upload():
 
     return render_template('upload.html')
 
+
+@main.route('/delete_csv/<int:csv_id>', methods=['POST'])
+def delete_csv(csv_id):
+    if 'user' not in session:
+        return redirect(url_for('main.login'))
+
+    record = CSVFile.query.get_or_404(csv_id)
+    if record.user_sub != session['user']['sub']:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('main.mycsvs'))
+
+    try:
+        # Verwijder fysiek bestand
+        if os.path.exists(record.filepath):
+            os.remove(record.filepath)
+        # Verwijder gerelateerde PDF als die bestaat
+        pdf_report = PDFReport.query.filter_by(user_sub=record.user_sub, filename=f"{os.path.splitext(record.filename)[0]}_analysis_report.pdf").first()
+        if pdf_report and os.path.exists(pdf_report.filepath):
+            os.remove(pdf_report.filepath)
+            db.session.delete(pdf_report)
+
+        db.session.delete(record)
+        db.session.commit()
+        flash("CSV file deleted successfully.", "success")
+    except Exception as e:
+        flash(f"Error deleting file: {e}", "danger")
+
+    return redirect(url_for('main.mycsvs'))
+
+
 @main.route('/mycsvs')
 def mycsvs():
     if 'user' not in session:
