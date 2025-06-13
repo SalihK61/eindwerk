@@ -31,6 +31,7 @@
             <th class="px-6 py-3 text-gray-900 dark:text-white">Column</th>
             <th class="px-6 py-3 text-gray-900 dark:text-white">Mean</th>
             <th class="px-6 py-3 text-gray-900 dark:text-white">Median</th>
+            <th class="px-6 py-3 text-gray-900 dark:text-white">Mode</th>
             <th class="px-6 py-3 text-gray-900 dark:text-white">Missing Values</th>
           </tr>
         </thead>
@@ -40,6 +41,7 @@
             <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.column }}</td>
             <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.mean }}</td>
             <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.median }}</td>
+            <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.mode }}</td>
             <td class="px-6 py-4 text-gray-900 dark:text-white">{{ stat.missing }}</td>
           </tr>
           {% endfor %}
@@ -150,10 +152,7 @@
     // Numeric histogram not implemented - consider Chart.js histogram plugin or server-side bins
   }
 
-  if(barSelect.options.length>1){barSelect.value=barSelect.options[1].value;renderBarChart(barSelect.value);}
-  if(lineSelect.options.length>1){lineSelect.value=lineSelect.options[1].value;renderLineChart(lineSelect.value);}
-  if(pieSelect.options.length>1){pieSelect.value=pieSelect.options[1].value;renderPieChart(pieSelect.value);}
-  if(numSelect.options.length>1){numSelect.value=numSelect.options[1].value;}
+  if(barSelect.options.length>1){barSelect.value=barSelect.options[1].value;renderBarChart(barSelect.value);}  if(lineSelect.options.length>1){lineSelect.value=lineSelect.options[1].value;renderLineChart(lineSelect.value);}  if(pieSelect.options.length>1){pieSelect.value=pieSelect.options[1].value;renderPieChart(pieSelect.value);}  if(numSelect.options.length>1){numSelect.value=numSelect.options[1].value;}
 
   barSelect.addEventListener('change',()=>renderBarChart(barSelect.value));
   lineSelect.addEventListener('change',()=>renderLineChart(lineSelect.value));
