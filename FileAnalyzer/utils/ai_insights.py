@@ -54,7 +54,7 @@ def generate_ai_insight(df):
                 max_tokens=1500
             )
             return resp.choices[0].message.content
-        except openai.error.OpenAIError as e:
+        except openai.OpenAIError as e:
             warnings.warn(f"OpenAI API error on attempt {attempt}: {e}")
             if attempt == MAX_RETRIES:
                 return "AI insights currently unavailable due to an error."
