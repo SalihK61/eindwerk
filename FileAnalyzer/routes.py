@@ -11,6 +11,7 @@ from utils.text import allowed_file, clean_text
 from utils.stats import compute_basic_stats, make_corr_html
 from utils.plotting import save_histograms, create_numeric_plot, create_category_plot, create_correlation_heatmap
 from utils.ai_insights import generate_ai_insight
+from functools import wraps
 
 # Initialize Blueprint
 main = Blueprint('main', __name__)
@@ -46,11 +47,13 @@ def callback():
     except OAuthError:
         return redirect(url_for('main.home'))
 
+    # get information from Auth0 about the user
     userinfo = current_app.auth0.get(
         f"https://{current_app.config['AUTH0_DOMAIN']}/userinfo",
         token=token
     ).json()
 
+    #Save user in session & db
     sub = userinfo['sub']
     name = userinfo.get('name')
     email = userinfo.get('email')
@@ -74,6 +77,7 @@ def callback():
 
 @main.route('/logout')
 def logout():
+    #delete session to clear it of the user
     session.clear()
     return redirect(
         f"https://{current_app.config['AUTH0_DOMAIN']}/v2/logout"
@@ -81,21 +85,28 @@ def logout():
         f"&client_id={current_app.config['AUTH0_CLIENT_ID']}"
     )
 
+#Login_check
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('main.login'))
+        return f(*args, **kwargs)
+    return decorated
+
 
 # ----------------------
 # Dashboard & Reports
 # ----------------------
 @main.route('/dashboard')
+@login_required
 def dashboard():
-    if 'user' not in session:
-        return redirect(url_for('main.login'))
     return render_template('dashboard.html', user=session['user'])
 
 
 @main.route('/reports')
+@login_required
 def reports():
-    if 'user' not in session:
-        return redirect(url_for('main.login'))
     pdfs = PDFReport.query.filter_by(user_sub=session['user']['sub']).all()
     return render_template('reports.html', reports=pdfs)
 
@@ -104,12 +115,10 @@ def reports():
 # CSV Upload & Analysis
 # ----------------------
 @main.route('/upload', methods=['GET', 'POST'])
+@login_required
 def upload():
-    if 'user' not in session:
-        flash('Please log in to upload files.', 'danger')
-        return redirect(url_for('main.login'))
-
     if request.method == 'POST':
+        #take the uploaded csv_file
         file = request.files.get('csv_file')
         if not file or file.filename == '':
             flash('No file selected.', 'danger')
@@ -118,16 +127,19 @@ def upload():
             flash('Invalid file type.', 'danger')
             return redirect(request.url)
 
+        #save file in a secure way.
         filename = secure_filename(file.filename)
         upload_folder = current_app.config['UPLOAD_FOLDER']
         os.makedirs(upload_folder, exist_ok=True)
         file_path = os.path.join(upload_folder, filename)
         file.save(file_path)
 
+        #save file to the db via path and link to the session user
         csv_record = CSVFile(user_sub=session['user']['sub'], filename=filename, filepath=file_path)
         db.session.add(csv_record)
         db.session.commit()
 
+        #Analyse data Basic statistics
         df = pd.read_csv(file_path)
         if df.empty:
             flash('Uploaded CSV is empty.', 'danger')
@@ -138,14 +150,17 @@ def upload():
         corr_html = make_corr_html(df)
         total_rows, dup_count = len(df), df.duplicated().sum()
 
+        # Delete duplicates
         cleaned_filename = f"cleaned_{filename}"
         df.drop_duplicates().to_csv(os.path.join(upload_folder, cleaned_filename), index=False)
 
+        #save the missing data so that it can be exported  if necessary
         missing_stats = df.isna().sum().to_dict()
         missing_rows = df[df.isna().any(axis=1)]
         missing_filename = f"missing_{filename}"
         missing_rows.to_csv(os.path.join(upload_folder, missing_filename), index=False)
 
+        #make graphs
         numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
         hist_paths = save_histograms(df, csv_record.id, numeric_cols)
 
@@ -162,20 +177,18 @@ def upload():
 
 
 @main.route('/delete_csv/<int:csv_id>', methods=['POST'])
+@login_required
 def delete_csv(csv_id):
-    if 'user' not in session:
-        return redirect(url_for('main.login'))
-
     record = CSVFile.query.get_or_404(csv_id)
     if record.user_sub != session['user']['sub']:
         flash("Unauthorized access.", "danger")
         return redirect(url_for('main.mycsvs'))
 
     try:
-        # Verwijder fysiek bestand
+        # Delete physically from folder by using the filepath
         if os.path.exists(record.filepath):
             os.remove(record.filepath)
-        # Verwijder gerelateerde PDF als die bestaat
+        # delete pdf related to csv if it exists
         pdf_report = PDFReport.query.filter_by(user_sub=record.user_sub,
                                                filename=f"{os.path.splitext(record.filename)[0]}_analysis_report.pdf").first()
         if pdf_report and os.path.exists(pdf_report.filepath):
@@ -192,10 +205,9 @@ def delete_csv(csv_id):
 
 
 @main.route('/delete_pdf/<int:pdf_id>', methods=['POST'])
+@login_required
 def delete_pdf(pdf_id):
-    if 'user' not in session:
-        return redirect(url_for('main.login'))
-
+    #delete pdf file
     report = PDFReport.query.get_or_404(pdf_id)
     if report.user_sub != session['user']['sub']:
         flash("Unauthorized access.", "danger")
@@ -215,15 +227,17 @@ def delete_pdf(pdf_id):
 
 
 @main.route('/mycsvs')
+@login_required
 def mycsvs():
-    if 'user' not in session:
-        return redirect(url_for('main.login'))
+    #get all csv files linked to the user
     csvs = CSVFile.query.filter_by(user_sub=session['user']['sub']).all()
     return render_template('csvs.html', csvs=csvs)
 
 
 @main.route('/analyse/<int:csv_id>')
+@login_required
 def analyse_csv(csv_id):
+    #Re analyse uploaded csv that is linked to the user
     record = CSVFile.query.get_or_404(csv_id)
     df = pd.read_csv(record.filepath)
 
@@ -254,6 +268,7 @@ def analyse_csv(csv_id):
 
 
 @main.route('/download/<path:filename>')
+@login_required
 def download_file(filename):
     file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     mimetype = 'application/pdf' if filename.lower().endswith('.pdf') else 'text/csv'
@@ -262,7 +277,9 @@ def download_file(filename):
 
 
 @main.route('/generate_pdf/<int:csv_id>')
+@login_required
 def generate_pdf(csv_id):
+    # generate pdf for the given csv file
     csv_record = CSVFile.query.get_or_404(csv_id)
     df = pd.read_csv(csv_record.filepath)
 
@@ -270,9 +287,11 @@ def generate_pdf(csv_id):
     user_prompt = request.args.get("prompt", "").strip()
     ai_insight = generate_ai_insight(df, user_prompt)
 
+    # generate graphs via matplotlib
     plot_funcs = [create_numeric_plot, create_category_plot, create_correlation_heatmap]
     plot_infos = [(buf, fname, exp) for func in plot_funcs for buf, fname, exp in [func(df)] if buf]
 
+    #pdf design and structure
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", "B", 14)
@@ -285,6 +304,7 @@ def generate_pdf(csv_id):
         pdf.multi_cell(0, 7, clean_text(line))
     pdf.ln(5)
 
+    #add the graphs at the end of the pdf
     for i, (buf, fname, explanation) in enumerate(plot_infos):
         path = os.path.join(current_app.config['UPLOAD_FOLDER'], fname)
         with open(path, 'wb') as f:
@@ -299,12 +319,14 @@ def generate_pdf(csv_id):
         pdf.image(path, x=10, w=pdf.w - 20)
         os.remove(path)
 
+    #save pdf physically
     pdf_filename = f"{os.path.splitext(csv_record.filename)[0]}_analysis_report.pdf"
     storage_path = os.path.join(current_app.config['UPLOAD_FOLDER'], pdf_filename)
     pdf_bytes = pdf.output(dest='S').encode('latin-1')
     with open(storage_path, 'wb') as f:
         f.write(pdf_bytes)
 
+    #save pdf in db
     if not PDFReport.query.filter_by(filename=pdf_filename, user_sub=csv_record.user_sub).first():
         db.session.add(PDFReport(
             filename=pdf_filename,

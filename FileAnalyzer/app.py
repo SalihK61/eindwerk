@@ -2,7 +2,6 @@ import os
 from flask import Flask, session, redirect, url_for, send_from_directory
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
-
 from config import Config
 from models import db, User
 from routes import main
@@ -54,15 +53,11 @@ app = create_app()
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Or set your PostgreSQL URI here
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# After overrides, ensure tables and upload folder exist
-with app.app_context():
-    db.create_all()
-    os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
 
 @app.context_processor
 def inject_user():
     """
-    Make the authenticated user profile available in all Jinja2 templates
+    Make the authenticated user profile available in all templates
     via the variable 'user'.
     """
     return {"user": session.get("user")}
