@@ -85,6 +85,7 @@ def logout():
         f"&client_id={current_app.config['AUTH0_CLIENT_ID']}"
     )
 
+
 #Login_check
 def login_required(f):
     @wraps(f)
