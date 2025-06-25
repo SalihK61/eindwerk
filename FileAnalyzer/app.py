@@ -65,13 +65,13 @@ def create_app():
         # Ensure upload and report directories exist
         os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
         os.makedirs(app.config.get('REPORT_FOLDER', 'reports'), exist_ok=True)
-    start_self_ping()
+
 
     return app
 
 # Create and configure the Flask app instance
 app = create_app()
-
+start_self_ping()
 
 # Additional configuration overrides (database URI, disable event system overhead)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Or set your PostgreSQL URI here
