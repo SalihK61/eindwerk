@@ -8,9 +8,28 @@ from routes import main
 from flask_login import current_user
 from flask import current_app
 from flask import send_from_directory
+import time
+import threading
+import requests
 
 # Load environment variables from .env file for configuration values
 load_dotenv()
+
+
+def start_self_ping():
+    """
+    The app is uploaded on OnRender.com (free tier) wich closes after 15minutes. this function pings the deployed site every 14 minutes.
+    """
+    def ping():
+        while True:
+            try:
+                url = "https://csv-analyse.onrender.com"
+                requests.get(url)
+                print("Ping site succesfull")
+            except Exception as e:
+                print(f"Failed to ping site: {e}")
+            time.sleep(14 * 60) #wait 14 minutes
+
 
 def create_app():
     """
@@ -46,11 +65,13 @@ def create_app():
         # Ensure upload and report directories exist
         os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
         os.makedirs(app.config.get('REPORT_FOLDER', 'reports'), exist_ok=True)
+    start_self_ping()
 
     return app
 
 # Create and configure the Flask app instance
 app = create_app()
+
 
 # Additional configuration overrides (database URI, disable event system overhead)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'  # Or set your PostgreSQL URI here
