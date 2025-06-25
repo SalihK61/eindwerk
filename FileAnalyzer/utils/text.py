@@ -13,7 +13,9 @@ def clean_text(text):
         text = str(text)
     replacements = {
         "•": "-", "–": "-", "—": "-",
-        "’": "'", "“": '"', "”": '"', "…": '...'
+        "’": "'", "“": '"', "”": '"', "…": '...',
+        "#": "",
+        "*": ""
     }
     for old, new in replacements.items():
         text = text.replace(old, new)
