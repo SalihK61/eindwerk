@@ -15,5 +15,3 @@ fpdf
 tailwind
 seaborn
 statsmodels
-time
-threading
