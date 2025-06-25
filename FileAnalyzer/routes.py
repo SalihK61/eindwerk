@@ -111,6 +111,14 @@ def reports():
     return render_template('reports.html', reports=pdfs)
 
 
+@main.route('/mycsvs')
+@login_required
+def mycsvs():
+    #get all csv files linked to the user
+    csvs = CSVFile.query.filter_by(user_sub=session['user']['sub']).all()
+    return render_template('csvs.html', csvs=csvs)
+
+
 # ----------------------
 # CSV Upload & Analysis
 # ----------------------
@@ -224,14 +232,6 @@ def delete_pdf(pdf_id):
         flash(f"Error deleting PDF: {e}", "danger")
 
     return redirect(url_for('main.reports'))
-
-
-@main.route('/mycsvs')
-@login_required
-def mycsvs():
-    #get all csv files linked to the user
-    csvs = CSVFile.query.filter_by(user_sub=session['user']['sub']).all()
-    return render_template('csvs.html', csvs=csvs)
 
 
 @main.route('/analyse/<int:csv_id>')
